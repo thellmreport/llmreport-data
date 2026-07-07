@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/annotation/v2.json",
+  "title": "Event annotation (v2)",
+  "description": "Append-only annotation, annotations/<event_id>/<seq>.json: rollback/flap notes, discrepancy links, mirror-corroborated notes (design.md 1.2 layout, 1.4 flap damping and dedup rules). Field shape not pinned in design.md; pinned here (Phase 0 resolution).",
+  "type": "object",
+  "required": [
+    "event_id",
+    "kind",
+    "created_at"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^evt_[0-9]{8}_[a-f0-9]{8}$"
+    },
+    "kind": {
+      "enum": [
+        "rollback",
+        "flap",
+        "discrepancy",
+        "mirror-corroborated",
+        "note"
+      ],
+      "description": "rollback: equal-and-opposite reversal inside the damping window — the event's effective status gains a rolled_back flag; discrepancy: link to a conflicting-value exception item; mirror-corroborated: only same-lineage mirrors corroborate (stays unconfirmed)"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "related_event_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^evt_[0-9]{8}_[a-f0-9]{8}$"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Other event involved (e.g. the reversal observation), when one exists"
+    },
+    "related_manifest_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

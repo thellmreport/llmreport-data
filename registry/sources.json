@@ -1,0 +1,1091 @@
+{
+  "$schema": "./schema/sources.schema.json",
+  "registry_version": "0.1.1",
+  "updated": "2026-07-07",
+  "tou_sweep": "compliance/tou-sweep-2026-07/00-sweep-summary.md",
+  "fetch_defaults": {
+    "user_agent": "TheLLMReportBot/1.0 (+https://thellmreport.com/bot)",
+    "user_agent_rotation": "forbidden — single identified UA, never rotated",
+    "conditional_get": true,
+    "backoff": "exponential",
+    "max_polls_per_hour_per_page": 1,
+    "schedule_jitter": true,
+    "robots_recheck_default": "every-cycle",
+    "never_circumvent_bot_walls": "no proxy rotation, no fingerprint spoofing, ever [V-Q3 cond. 1]",
+    "structured_endpoints_first": "HTML only for docs pages with no API [V-Q3 cond. 2]",
+    "probe_accounts": "dedicated probe-only API accounts per provider, isolated from everything else [V-Q3 cond. 6]",
+    "website_auth": "never authenticate on any website host (OpenAI, Anthropic, Mistral explicit per sweep §2.4)",
+    "archives": "verbatim fetch archives private; sha256 manifests public",
+    "content_flags": ["no-ml-training"],
+    "manifest_fields": ["title", "canonical", "redirect_chain"],
+    "global_sentinels": [
+      "global-bot-wall-revocation",
+      "global-uncleared-redirect",
+      "global-robots-stance-diff"
+    ],
+    "audit_log": "request-level (host, timestamp, status, UA, conditional-GET result), rolled up weekly into the public Ledger [V-Q3 cond. 7]"
+  },
+  "sentinels": {
+    "global-bot-wall-revocation": {
+      "scope": "all-hosts",
+      "trigger": "any 403 / 429 / bot-challenge response",
+      "action": "treat as revocation: auto-halt host, escalate to exceptions queue, never circumvent",
+      "cadence": "every-fetch"
+    },
+    "global-uncleared-redirect": {
+      "scope": "all-hosts",
+      "trigger": "redirect resolving to a host not registered and cleared in this file",
+      "action": "suspend source_id; require fresh ToU clearance before re-enable",
+      "cadence": "every-fetch"
+    },
+    "global-robots-stance-diff": {
+      "scope": "all-hosts",
+      "trigger": "scheduled robots.txt re-fetch diffs a stance change (incl. Content Signals)",
+      "action": "open exceptions-queue item on any change [V-Q3 cond. 7]",
+      "cadence": "weekly"
+    },
+    "aws-carveout": {
+      "scope": "docs.aws.amazon.com",
+      "watch": [
+        "https://aws.amazon.com/terms/ — Site Terms CC BY-SA 4.0 documentation carve-out sentence",
+        "https://aws.amazon.com/aup/ — AWS Acceptable Use Policy"
+      ],
+      "fetch_via": "wayback-default; direct only on counsel sign-off (sweep dissent B2)",
+      "trigger": "carve-out sentence removed or modified, or AUP change (sweep dissents B1/B3)",
+      "action": "verdict lapses to EXCLUDE: mark all docs.aws.amazon.com sources excluded=true; collector auto-switches to aws-bedrock-listfoundationmodels lifecycle fields + aws-bedrock-pricelist-api diffs; no GitHub fallback (awsdocs Bedrock mirrors retired 2023)",
+      "cadence": "weekly"
+    },
+    "aws-bedrock-robots-halt": {
+      "scope": "docs.aws.amazon.com",
+      "trigger": "robots.txt disallows any /bedrock/ path",
+      "action": "auto-halt all docs.aws.amazon.com collection",
+      "cadence": "every-cycle"
+    },
+    "anthropic-canonical-drift": {
+      "scope": "platform.claude.com",
+      "trigger": "host or canonical-URL drift on pinned pages; change in /docs/en/release-notes/api 307-alias behavior",
+      "action": "log full redirect chain every fetch; alert on host/canonical drift (sweep §2.2)",
+      "cadence": "every-fetch"
+    },
+    "google-cross-host-redirect": {
+      "scope": "ai.google.dev, cloud.google.com",
+      "trigger": "cross-host redirect (e.g. docs.cloud.google.com migration)",
+      "action": "treat as new-host event: suspend source + fresh clearance (sweep §2.4)",
+      "cadence": "every-fetch"
+    },
+    "mistral-legal-hub-watch": {
+      "scope": "legal.mistral.ai",
+      "trigger": "new policy document appears on the hub (can appear without a robots.txt change)",
+      "action": "open exceptions-queue item; route new document to ToU clearance (sweep §2.3)",
+      "cadence": "weekly"
+    },
+    "xai-content-signals": {
+      "scope": "docs.x.ai, x.ai",
+      "trigger": "Content-Signal change (current stance: docs.x.ai ai-train=no, ai-input=yes; x.ai ai-input=no)",
+      "action": "honor immediately; ai-input=no means deterministic pipeline only, no LLM ingestion at any stage; open exceptions-queue item on change",
+      "cadence": "every-cycle"
+    }
+  },
+  "sources": [
+    {
+      "source_id": "openai-models-docs",
+      "url": "https://developers.openai.com/api/docs/models",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "openai-models-api",
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/openai.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "never_authenticate": true,
+        "notes": "developers.openai.com robots.txt permits (sweep verdict CONDITIONAL); Services Agreement entity-separation condition pending (sweep open item 2)."
+      }
+    },
+    {
+      "source_id": "openai-models-api",
+      "url": "https://api.openai.com/v1/models",
+      "method": "GET",
+      "auth": "header:Authorization",
+      "class": "official-api",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "openrouter-models",
+      "entitlement_caveat": "models list is account/tier-scoped; absence ≠ retirement (§1.4 rule c carve-out)",
+      "tou_ref": "compliance/tou-sweep-2026-07/openai.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "Dedicated probe-only API account [V-Q3 cond. 6]."
+      }
+    },
+    {
+      "source_id": "openai-changelog",
+      "url": "https://developers.openai.com/api/docs/changelog",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/openai.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "never_authenticate": true
+      }
+    },
+    {
+      "source_id": "openai-status-summary",
+      "url": "https://status.openai.com/api/v2/summary.json",
+      "method": "GET",
+      "auth": "none",
+      "class": "statuspage",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "openai-status-incidents",
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/openai.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none"
+      }
+    },
+    {
+      "source_id": "openai-status-incidents",
+      "url": "https://status.openai.com/api/v2/incidents.json",
+      "method": "GET",
+      "auth": "none",
+      "class": "statuspage",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/openai.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none"
+      }
+    },
+    {
+      "source_id": "openai-com",
+      "url": "https://openai.com/",
+      "method": null,
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": null,
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/openai.md",
+      "excluded": true,
+      "exclusion_reason": "403 WAF — never fetch (design.md §1.3 matrix); never circumvent [V-Q3 cond. 1]. Carve-out: /policies/* compliance sources are registered as policy-page records fetched via Wayback only.",
+      "conditions": {
+        "match_scope": "host"
+      }
+    },
+    {
+      "source_id": "anthropic-models-docs",
+      "url": "https://platform.claude.com/docs/en/docs/about-claude/models/overview",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "anthropic-models-api",
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/anthropic.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "never_authenticate": true,
+        "skip_paths": ["/api/*"],
+        "sentinels": ["anthropic-canonical-drift"],
+        "notes": "robots.txt re-check cap ≤24h per sweep §2.4 (hourly every-cycle satisfies it); never fetch /api/* on platform.claude.com; never authenticate (sweep §2.2)."
+      }
+    },
+    {
+      "source_id": "anthropic-models-api",
+      "url": "https://api.anthropic.com/v1/models",
+      "method": "GET",
+      "auth": "header:x-api-key",
+      "class": "official-api",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": "models list is account/tier-scoped; absence ≠ retirement (§1.4 rule c carve-out)",
+      "tou_ref": "compliance/tou-sweep-2026-07/anthropic.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "Dedicated probe-only API account [V-Q3 cond. 6]."
+      }
+    },
+    {
+      "source_id": "anthropic-changelog",
+      "url": "https://platform.claude.com/docs/en/release-notes/overview",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/anthropic.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "never_authenticate": true,
+        "skip_paths": ["/api/*"],
+        "sentinels": ["anthropic-canonical-drift"],
+        "notes": "PINNED by ToU sweep §2.2: /docs/en/release-notes/api is only a 307 alias of this URL. Log redirects; alert on host/canonical drift. Never fetch /api/* on platform.claude.com; never authenticate."
+      }
+    },
+    {
+      "source_id": "anthropic-status-summary",
+      "url": "https://status.claude.com/api/v2/summary.json",
+      "method": "GET",
+      "auth": "none",
+      "class": "statuspage",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "anthropic-status-incidents",
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/anthropic.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none"
+      }
+    },
+    {
+      "source_id": "anthropic-status-incidents",
+      "url": "https://status.claude.com/api/v2/incidents.json",
+      "method": "GET",
+      "auth": "none",
+      "class": "statuspage",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/anthropic.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "Statuspage incident-history companion to anthropic-status-summary (same host/product as the pinned summary.json endpoint; standard public Statuspage API). Added 2026-07-07 for the Phase 0 status collector at owner direction, mirroring openai-status-incidents; matrix cell design.md §1.3 lists only summary.json — fold into the next registry review."
+      }
+    },
+    {
+      "source_id": "google-gemini-pricing-docs",
+      "url": "https://ai.google.dev/gemini-api/docs/pricing",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/google.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "cc-by-4.0",
+        "sentinels": ["google-cross-host-redirect"],
+        "notes": "ai.google.dev content is CC BY 4.0 — attribute with modification notices (sweep §2.4); text-only excerpting, no Google branding."
+      }
+    },
+    {
+      "source_id": "google-vertex-pricing-docs",
+      "url": "https://cloud.google.com/vertex-ai/generative-ai/pricing",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/google.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "sentinels": ["google-cross-host-redirect"],
+        "notes": "cloud.google.com is UNLICENSED — minimal excerpts only (sweep verdict); archives never published (sweep open item 6, condition 8 pending); text-only excerpting, no Google branding."
+      }
+    },
+    {
+      "source_id": "google-models-api",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models",
+      "method": "GET",
+      "auth": "header:x-goog-api-key",
+      "class": "official-api",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": "models list is account/tier-scoped; absence ≠ retirement (§1.4 rule c carve-out)",
+      "tou_ref": "compliance/tou-sweep-2026-07/google.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "Auth via x-goog-api-key header ONLY — key in query string is forbidden by the fetch library (design.md §1.5). Dedicated probe-only API account [V-Q3 cond. 6]."
+      }
+    },
+    {
+      "source_id": "google-gemini-changelog",
+      "url": "https://ai.google.dev/gemini-api/docs/changelog",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/google.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "cc-by-4.0",
+        "sentinels": ["google-cross-host-redirect"],
+        "notes": "CC BY 4.0 with modification notices (sweep §2.4)."
+      }
+    },
+    {
+      "source_id": "google-cloud-status",
+      "url": "https://status.cloud.google.com/incidents.json",
+      "method": "GET",
+      "auth": "none",
+      "class": "statuspage",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/google.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none"
+      }
+    },
+    {
+      "source_id": "aws-bedrock-pricelist-api",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/index.json",
+      "method": "GET",
+      "auth": "none",
+      "class": "official-api",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/aws.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "AWS Price List Bulk API is the ONLY authorized AWS pricing source [V-Q3 cond. 8, recorded in 00-validation-report.md §2 Q03]. Conditional GET mandatory (large file)."
+      }
+    },
+    {
+      "source_id": "aws-bedrock-listfoundationmodels",
+      "url": "https://bedrock.us-east-1.amazonaws.com/foundation-models",
+      "method": "GET",
+      "auth": "sigv4",
+      "class": "official-api",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": "region-scoped listing (us-east-1 pinned); absence in one region ≠ retirement (§1.4 rule c carve-out)",
+      "tou_ref": "compliance/tou-sweep-2026-07/aws.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "Bedrock ListFoundationModels (SigV4, dedicated probe-only account). Lifecycle fields are the designed fallback if the docs.aws.amazon.com carve-out lapses (sweep §2.1)."
+      }
+    },
+    {
+      "source_id": "aws-bedrock-doc-history",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/doc-history.html",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "aws-bedrock-listfoundationmodels",
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/aws.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "crawl_delay_s": 5,
+        "attribution": "cc-by-sa-4.0",
+        "sentinels": ["aws-carveout", "aws-bedrock-robots-halt"],
+        "notes": "CLEARED conditionally under the AWS Site Terms CC BY-SA 4.0 documentation carve-out (sweep §2.1) — the carve-out overrides the Site Terms scraping ban. Attribution: attribute + license-link + ShareAlike, or short unmodified quotes; note CC BY-SA §6(a) auto-termination. Crawl-delay ≥5s. Text-only excerpting, no logos/trade dress. If carve-out lapses: excluded=true, fall back to ListFoundationModels lifecycle + Price List diffs."
+      }
+    },
+    {
+      "source_id": "aws-bedrock-model-lifecycle",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "aws-bedrock-listfoundationmodels",
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/aws.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "crawl_delay_s": 5,
+        "attribution": "cc-by-sa-4.0",
+        "sentinels": ["aws-carveout", "aws-bedrock-robots-halt"],
+        "notes": "Same clearance and conditions as aws-bedrock-doc-history (sweep §2.1): CC BY-SA 4.0 carve-out, Crawl-delay ≥5s, weekly carve-out sentinel, auto-halt on /bedrock/ robots disallow."
+      }
+    },
+    {
+      "source_id": "aws-health-status",
+      "url": "https://health.aws.amazon.com/public/currentevents",
+      "method": "GET",
+      "auth": "none",
+      "class": "statuspage",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/aws.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none"
+      }
+    },
+    {
+      "source_id": "aws-amazon-com",
+      "url": "https://aws.amazon.com/",
+      "method": null,
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": null,
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/aws.md",
+      "excluded": true,
+      "exclusion_reason": "aws.amazon.com HTML excluded — Site Terms scraping ban, unmitigated for marketing/pricing pages [V-Q3 verifier cond. 8; sweep §2.1]. Carve-out: /terms/ and /aup/ weekly compliance fetches only, Wayback-default (policy-aws-terms, policy-aws-aup), direct only on counsel sign-off (dissent B2).",
+      "conditions": {
+        "match_scope": "host"
+      }
+    },
+    {
+      "source_id": "azure-retail-prices-api",
+      "url": "https://prices.azure.com/api/retail/prices?$filter=contains(productName,'OpenAI')",
+      "method": "GET",
+      "auth": "none",
+      "class": "official-api",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/microsoft.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "Azure Retail Prices API is the ONLY Azure OpenAI pricing source. Filter on productName — the serviceName filter returns empty (design.md §1.3). Paginated; hundreds of regional meters collapse into one event per §1.2.2 aggregation rule."
+      }
+    },
+    {
+      "source_id": "azure-openai-whats-new",
+      "url": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/whats-new",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/microsoft.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "cc-by-4.0",
+        "skip_paths": ["/*/opbuildpdf/*", "/api/nextsteps/*", "/api/attachments/*"],
+        "notes": "learn.microsoft.com is PRIMARY; raw.githubusercontent.com (azure-ai-docs) is NOT cleared and is NOT a source (sweep §2.4; GitHub host-set clearance is a separate open item 4). Content CC BY 4.0 via azure-ai-docs — attribute with modification notices; no Microsoft branding."
+      }
+    },
+    {
+      "source_id": "azure-status-feed",
+      "url": "https://azure.status.microsoft/en-us/status/feed/",
+      "method": "GET",
+      "auth": "none",
+      "class": "statuspage",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/microsoft.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "RSS feed — no public JSON status API exists for Azure (design.md §1.3)."
+      }
+    },
+    {
+      "source_id": "azure-microsoft-com",
+      "url": "https://azure.microsoft.com/",
+      "method": null,
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": null,
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/microsoft.md",
+      "excluded": true,
+      "exclusion_reason": "JS-rendered, robots unverifiable — never scrape [V-Q3 cond. 4; design.md §1.3 matrix].",
+      "conditions": {
+        "match_scope": "host"
+      }
+    },
+    {
+      "source_id": "mistral-docs-mirror",
+      "url": "https://github.com/mistralai/platform-docs-public",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "mistral-models-docs",
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/mistral.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "apache-2.0",
+        "mechanism": "github-rest-api",
+        "canonical_page": "https://docs.mistral.ai/models/overview",
+        "notes": "MIRROR-PRIMARY for Mistral docs content (sweep §2.4): Apache-2.0, license-clean primary. Collection mechanism must be the GitHub REST API, not raw polling; activation gated on the separate GitHub host-set clearance (sweep open item 4)."
+      }
+    },
+    {
+      "source_id": "mistral-models-docs",
+      "url": "https://docs.mistral.ai/models/overview",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "mistral-models-api",
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/mistral.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "never_authenticate": true,
+        "fetch_scope": "liveness-parity-only",
+        "mirror_primary": "https://github.com/mistralai/platform-docs-public",
+        "notes": "PINNED canonical URL /models/overview (sweep §2.4; supersedes the draft /getting-started/models/models_overview/ path). docs.mistral.ai fetches are liveness/parity checks only — content extraction runs against the Apache-2.0 GitHub mirror. robots.txt is absent (404) on this host; zero scrape/crawl vocabulary in any Mistral ToS (sweep verdict)."
+      }
+    },
+    {
+      "source_id": "mistral-retirements",
+      "url": "https://docs.mistral.ai/models/overview",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "mistral-models-api",
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/mistral.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "never_authenticate": true,
+        "fetch_scope": "liveness-parity-only",
+        "mirror_primary": "https://github.com/mistralai/platform-docs-public",
+        "extraction_rule_id": "mistral-retirement-dates-v1",
+        "notes": "Distinct source_id per design.md §1.3: retirement/deprecation dates live in the same models-overview table but have their own versioned extraction rule. Same mirror-primary condition as mistral-models-docs."
+      }
+    },
+    {
+      "source_id": "mistral-models-api",
+      "url": "https://api.mistral.ai/v1/models",
+      "method": "GET",
+      "auth": "header:Authorization",
+      "class": "official-api",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": "models list is account/tier-scoped; absence ≠ retirement (§1.4 rule c carve-out)",
+      "tou_ref": "compliance/tou-sweep-2026-07/mistral.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "Dedicated probe-only API account [V-Q3 cond. 6]."
+      }
+    },
+    {
+      "source_id": "mistral-status-payload",
+      "url": "https://status.mistral.ai/_payload.json",
+      "method": "GET",
+      "auth": "none",
+      "class": "statuspage",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "mistral-status-page",
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/mistral.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "Checkly-hosted status page: the Nuxt _payload.json feed is the pinned structured endpoint (Phase 0 resolution required by design.md §1.3 matrix)."
+      }
+    },
+    {
+      "source_id": "mistral-status-page",
+      "url": "https://status.mistral.ai/",
+      "method": "GET",
+      "auth": "none",
+      "class": "statuspage",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/mistral.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "extraction_rule_id": "mistral-status-scrape-v1",
+        "notes": "Designed fallback for mistral-status-payload: page-scrape with a versioned extraction rule (design.md §1.3 matrix)."
+      }
+    },
+    {
+      "source_id": "xai-models-docs",
+      "url": "https://docs.x.ai/developers/models",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "xai-models-api",
+      "entitlement_caveat": "publishing xAI probe/pricing numbers is BLOCKED until manual API-terms review at signup [V-Q3 cond. 5; sweep open item 5]",
+      "tou_ref": "compliance/tou-sweep-2026-07/xai.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "content_signals": { "ai-train": "no", "ai-input": "yes" },
+        "sentinels": ["xai-content-signals"],
+        "notes": "PINNED https://docs.x.ai/developers/models (sweep §2.4; supersedes the draft /docs/models path). docs.x.ai robots.txt is Allow-all with Content-Signals + llms.txt; residual AUP risk accepted with stop-on-block (sweep verdict)."
+      }
+    },
+    {
+      "source_id": "xai-changelog",
+      "url": "https://docs.x.ai/developers/models",
+      "method": "GET",
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": "xai-models-api",
+      "entitlement_caveat": "publishing xAI probe/pricing numbers is BLOCKED until manual API-terms review at signup [V-Q3 cond. 5; sweep open item 5]",
+      "tou_ref": "compliance/tou-sweep-2026-07/xai.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "content_signals": { "ai-train": "no", "ai-input": "yes" },
+        "sentinels": ["xai-content-signals"],
+        "extraction_rule_id": "xai-changelog-v1",
+        "notes": "Changelog intelligence extracted from the same pinned models page (design.md §1.3 matrix) under a distinct source_id with its own extraction rule."
+      }
+    },
+    {
+      "source_id": "xai-models-api",
+      "url": "https://api.x.ai/v1/models",
+      "method": "GET",
+      "auth": "header:Authorization",
+      "class": "official-api",
+      "lineage": "provider-primary",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": "models list is account/tier-scoped; absence ≠ retirement (§1.4 rule c carve-out). Publishing xAI numbers BLOCKED until manual API-terms review [V-Q3 cond. 5]",
+      "tou_ref": "compliance/tou-sweep-2026-07/xai.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "Dedicated probe-only API account [V-Q3 cond. 6]."
+      }
+    },
+    {
+      "source_id": "xai-availability-probe",
+      "url": "https://api.x.ai/v1/chat/completions",
+      "method": "POST",
+      "auth": "header:Authorization",
+      "class": "own-probe",
+      "lineage": "own-probe",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": "xAI status intelligence comes from own probes ONLY (status.x.ai excluded); publishing probe numbers BLOCKED until manual API-terms review [V-Q3 cond. 5]",
+      "tou_ref": "compliance/tou-sweep-2026-07/xai.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "notes": "Own availability/latency probe against the API with a dedicated probe-only account — the registry substitute for a status page (design.md §1.3 matrix 'own probes only')."
+      }
+    },
+    {
+      "source_id": "x-ai",
+      "url": "https://x.ai/",
+      "method": null,
+      "auth": "none",
+      "class": "provider-docs",
+      "lineage": "provider-primary",
+      "cadence": null,
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/xai.md",
+      "excluded": true,
+      "exclusion_reason": "x.ai excluded (design.md §1.3 matrix): marketing host, Content-Signal ai-input=no. Carve-out: /legal/* registered as policy-page record policy-xai-legal, Wayback-only, deterministic pipeline.",
+      "conditions": {
+        "match_scope": "host",
+        "content_signals": { "ai-input": "no" },
+        "sentinels": ["xai-content-signals"]
+      }
+    },
+    {
+      "source_id": "status-x-ai",
+      "url": "https://status.x.ai/",
+      "method": null,
+      "auth": "none",
+      "class": "statuspage",
+      "lineage": "provider-primary",
+      "cadence": null,
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/xai.md",
+      "excluded": true,
+      "exclusion_reason": "403 bot wall (design.md §1.3 matrix) — never circumvent [V-Q3 cond. 1]. xAI status via xai-availability-probe (own probes only).",
+      "conditions": {
+        "match_scope": "host"
+      }
+    },
+    {
+      "source_id": "openrouter-models",
+      "url": "https://openrouter.ai/api/v1/models",
+      "method": "GET",
+      "auth": "none",
+      "class": "third-party-aggregator",
+      "lineage": "third-party-aggregator",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": null,
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "corroboration_only": true,
+        "notes": "Corroboration only — never a sole source; mirrors provider docs, so it is NOT independent of provider-primary lineage (design.md §1.4). No auth. Structured API endpoint — outside the HTML ToU sweep scope; no sweep file."
+      }
+    },
+    {
+      "source_id": "litellm-model-prices",
+      "url": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+      "method": "GET",
+      "auth": "none",
+      "class": "third-party-aggregator",
+      "lineage": "third-party-aggregator",
+      "cadence": "hourly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": null,
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "every-cycle",
+        "attribution": "none",
+        "corroboration_only": true,
+        "mechanism": "raw-file-conditional-get",
+        "extraction_rule_id": "litellm-prices-v1",
+        "notes": "model_prices_and_context_window.json fetched directly from raw.githubusercontent.com with conditional GET (owner-directed Phase 0 build instruction, 2026-07-07; supersedes the earlier git-history-diffing pin that was gated on the GitHub host-set clearance, sweep open item 4 — revisit at clearance). Never a sole source; mirrors provider docs (design.md §1.4 independence). No sweep file — GitHub clearance tracked separately."
+      }
+    },
+    {
+      "source_id": "policy-openai-services-agreement",
+      "url": "https://openai.com/policies/services-agreement/",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": true,
+        "notes": "Sweep §2.3: business-terms URL 307s here. Host openai.com is 403-WAF-excluded, so compliance fetches are Wayback-only (ToU analysis is currently Wayback-sourced; human-browser re-verification pending, sweep open item 2). Services Agreement eff. 2026-01-01 §3.3(f)/§14.1(B) amendment pending (open item 2). Feeds policy.changed."
+      }
+    },
+    {
+      "source_id": "policy-openai-tou-row",
+      "url": "https://openai.com/policies/row-terms-of-use/",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": true,
+        "notes": "Sweep §2.3 requires all three regional ToU variants (ROW/EU/US). Regional variant path resolved from the openai.com/policies hub — verify at import per sweep open item 2. Wayback-only (host 403-WAF-excluded)."
+      }
+    },
+    {
+      "source_id": "policy-openai-tou-eu",
+      "url": "https://openai.com/policies/eu-terms-of-use/",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": true,
+        "notes": "EU regional ToU variant (sweep §2.3). Path resolved from the openai.com/policies hub — verify at import per sweep open item 2. Wayback-only (host 403-WAF-excluded)."
+      }
+    },
+    {
+      "source_id": "policy-openai-tou-us",
+      "url": "https://openai.com/policies/us-terms-of-use/",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": true,
+        "notes": "US regional ToU variant (sweep §2.3). Path resolved from the openai.com/policies hub — verify at import per sweep open item 2. Wayback-only (host 403-WAF-excluded)."
+      }
+    },
+    {
+      "source_id": "policy-anthropic-legal",
+      "url": "https://www.anthropic.com/legal",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": false,
+        "notes": "Legal hub covering Commercial ToS (eff. 2025-06-17), Consumer ToS (eff. 2025-10-08), and Usage Policy (sweep §2.3). Direct identified-UA fetch permitted (anthropic verdict: verifier concurred). Feeds policy.changed."
+      }
+    },
+    {
+      "source_id": "policy-aws-terms",
+      "url": "https://aws.amazon.com/terms/",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": true,
+        "sentinels": ["aws-carveout"],
+        "notes": "Wayback-default per policy-pages verifier; direct fetch only on counsel sign-off + good-faith provider notice (sweep §2.3, dissent B2, open item 3). Hosts the CC BY-SA 4.0 carve-out sentence watched by the aws-carveout sentinel (dissent B1)."
+      }
+    },
+    {
+      "source_id": "policy-aws-aup",
+      "url": "https://aws.amazon.com/aup/",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": true,
+        "sentinels": ["aws-carveout"],
+        "notes": "Wayback-default per policy-pages verifier; direct only on counsel sign-off (sweep §2.3). Watched by the aws-carveout sentinel alongside the Site Terms (dissent B3)."
+      }
+    },
+    {
+      "source_id": "policy-xai-legal",
+      "url": "https://x.ai/legal/",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": true,
+        "deterministic_only": true,
+        "path_scope": "/legal/*",
+        "content_signals": { "ai-input": "no" },
+        "sentinels": ["xai-content-signals"],
+        "notes": "Wayback-ONLY (sweep §2.3). Content-Signal ai-input=no: deterministic pipeline, no LLM ingestion at any stage — implement or EXCLUDE (sweep open item 3). Covers all x.ai/legal/* documents."
+      }
+    },
+    {
+      "source_id": "policy-google-site-policies",
+      "url": "https://developers.google.com/terms/site-policies",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "cc-by-4.0",
+        "wayback_only": false,
+        "notes": "CC BY 4.0 attribution required on quotes (sweep §2.3). Feeds policy.changed."
+      }
+    },
+    {
+      "source_id": "policy-google-terms",
+      "url": "https://policies.google.com/terms",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "cc-by-4.0",
+        "wayback_only": false,
+        "notes": "CC BY 4.0 attribution required on quotes (sweep §2.3). Google ToS 'may not copy... our services or software' clause ruling pending (sweep open item 6)."
+      }
+    },
+    {
+      "source_id": "policy-microsoft-learn-tou",
+      "url": "https://learn.microsoft.com/en-us/legal/termsofuse",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": false,
+        "notes": "learn.microsoft.com Terms of Use, rev. 2025-05-12 (sweep §2.3). Learn TOU has no anti-bot clause (microsoft verdict). Feeds policy.changed."
+      }
+    },
+    {
+      "source_id": "policy-mistral-terms",
+      "url": "https://legal.mistral.ai/terms",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": false,
+        "notes": "mistral.ai/terms 301s here (sweep §2.3). Formation-analysis rewrite pending (browsewrap, not signup-only — sweep open item 7)."
+      }
+    },
+    {
+      "source_id": "policy-mistral-legal-hub",
+      "url": "https://legal.mistral.ai/",
+      "method": "GET",
+      "auth": "none",
+      "class": "policy-page",
+      "lineage": "provider-primary",
+      "cadence": "weekly",
+      "failover": null,
+      "entitlement_caveat": null,
+      "tou_ref": "compliance/tou-sweep-2026-07/policy-pages.md",
+      "excluded": false,
+      "conditions": {
+        "robots_recheck": "weekly",
+        "attribution": "none",
+        "wayback_only": false,
+        "sentinels": ["mistral-legal-hub-watch"],
+        "notes": "Monitor the hub itself — new policies can appear without a robots.txt change (sweep §2.3)."
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/snapshots/docs-html/v2.json",
+  "title": "docs-HTML canonical snapshot (v2)",
+  "description": "design.md 1.2.3: {page_url, extracted: [{field_path, value}], extraction_rule_id} — extraction rules are versioned code, not LLM output.",
+  "type": "object",
+  "required": [
+    "page_url",
+    "extracted",
+    "extraction_rule_id"
+  ],
+  "properties": {
+    "page_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "extracted": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "field_path",
+          "value"
+        ],
+        "properties": {
+          "field_path": {
+            "type": "string"
+          },
+          "value": {
+            "description": "Any canonicalized JSON value"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "extraction_rule_id": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

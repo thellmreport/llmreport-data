@@ -1,0 +1,60 @@
+# Weekly robots.txt stance re-check across every registered host
+# (registry sentinel: global-robots-stance-diff, cadence weekly; [V-Q3 cond. 7]).
+# Hourly collectors already re-check robots every cycle for the hosts they hit;
+# this job is the scheduled full sweep that also covers weekly-cadence
+# policy-page hosts, and diffs stance INCLUDING Content Signals.
+name: robots-recheck (weekly)
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "43 6 * * 1" # Mondays 06:43 UTC (off-hour minute; no shared tick)
+
+permissions:
+  contents: read
+  issues: write # exceptions-queue items are GitHub issues
+
+env:
+  UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/llmreport-venv # local-venv pattern
+  UV_PYTHON: "3.12"
+
+jobs:
+  recheck:
+    # Gated until fetchkit's robots module lands (Phase 1); if enabled early,
+    # the TODO step fails loudly rather than pretending the sweep ran.
+    if: ${{ vars.SENTINELS_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2 # pinned
+        with:
+          fetch-depth: 1 # shallow clones mandated (design.md 1.1)
+
+      - uses: actions/setup-python@v5.3.0 # pinned
+        with:
+          python-version: "3.12"
+
+      - name: Install uv (pinned)
+        run: pip install uv==0.7.13
+
+      - name: Sync environment (locked)
+        run: uv sync --frozen
+
+      # TODO(activation): fetchkit robots module (Phase 1). Contract:
+      #   - fetch robots.txt for every distinct host in registry/sources.json
+      #     (identified UA, conditional GET, never circumvent bot walls),
+      #   - parse stance for TheLLMReportBot + Content Signals,
+      #   - diff against the previously committed stance snapshot,
+      #   - non-empty diff => nonzero exit + machine-readable report.
+      - name: Re-fetch and diff robots stances
+        run: |
+          echo "TODO(activation): uv run python -m fetchkit.robots_recheck --registry registry/sources.json --out ${{ runner.temp }}/robots-stance.json"
+          exit 1
+
+      # design.md: open an exceptions-queue item on ANY stance change - the
+      # pipeline never silently adapts to a policy change.
+      - name: Open exceptions-queue item on stance change
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "TODO(activation): gh issue create --label exceptions-queue,robots --title 'robots stance change detected' --body-file ${{ runner.temp }}/robots-stance.json"

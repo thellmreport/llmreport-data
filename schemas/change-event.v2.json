@@ -1,0 +1,437 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/change-event/v2.json",
+  "title": "Change event envelope (v2)",
+  "description": "Immutable candidate/fact record (design.md 1.2.1). Event files are immutable once merged; all state that changes after creation lives in verdicts/, publications/, annotations/. Effective status (unconfirmed/confirmed/corrected/retracted) is COMPUTED by the store linter, never stored here: status, verification and published_surfaces are intentionally not fields of this schema, and additionalProperties:false keeps them out.",
+  "type": "object",
+  "required": [
+    "id",
+    "type",
+    "provider",
+    "observed_at",
+    "evidence",
+    "summary",
+    "data",
+    "producer"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^evt_[0-9]{8}_[a-f0-9]{8}$",
+      "description": "evt_<YYYYMMDD>_<hash8>: date is the observed_at UTC date; hash8 is the first 8 hex chars of sha256 over the candidate identity key (design.md 1.2/1.4; see schemas/identity-key.v2.json). Collision is idempotence, not error."
+    },
+    "type": {
+      "enum": [
+        "model.released",
+        "model.updated",
+        "model.deprecated",
+        "model.retired",
+        "price.changed",
+        "limits.changed",
+        "capability.changed",
+        "outage.started",
+        "outage.resolved",
+        "degradation.detected",
+        "degradation.resolved",
+        "policy.changed",
+        "correction.issued"
+      ]
+    },
+    "provider": {
+      "enum": [
+        "openai",
+        "anthropic",
+        "google",
+        "aws-bedrock",
+        "azure-openai",
+        "mistral",
+        "xai"
+      ],
+      "description": "openrouter intentionally absent: OpenRouter is a corroborating evidence source (source_id), not a tracked provider (design.md 1.2.1 note)"
+    },
+    "model_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Provider-native id; canonical identity resolved via registry/model-aliases.json"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of OUR fetch, never the cron slot"
+    },
+    "effective_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 280
+    },
+    "data": {
+      "type": "object",
+      "$comment": "MUST validate against the per-type sub-schema in schemas/data/ (design.md 1.2.2); dispatched by the allOf/if/then chain below"
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidenceItem"
+      }
+    },
+    "producer": {
+      "type": "object",
+      "description": "Reproducibility: which code produced this record",
+      "required": [
+        "collector_id",
+        "code_sha",
+        "schema_version"
+      ],
+      "properties": {
+        "collector_id": {
+          "type": "string"
+        },
+        "code_sha": {
+          "type": "string",
+          "description": "llmreport-data git SHA of the collector code"
+        },
+        "schema_version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "correction_of": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Event id this corrects; feeds the corrections log and published error rate"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "model.released"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/model.released/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "model.updated"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/model.updated/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "model.deprecated"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/model.deprecated/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "model.retired"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/model.retired/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "price.changed"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/price.changed/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "limits.changed"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/limits.changed/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "capability.changed"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/capability.changed/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "outage.started"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/outage.started/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "outage.resolved"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/outage.resolved/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "degradation.detected"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/degradation.detected/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "degradation.resolved"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/degradation.resolved/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "policy.changed"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/policy.changed/v2.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "correction.issued"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "https://thellmreport.com/schemas/data/correction.issued/v2.json"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "evidenceItem": {
+      "type": "object",
+      "required": [
+        "source_id",
+        "url",
+        "fetched_at",
+        "sha256_full",
+        "manifest_path"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "description": "Key into registry/sources.json"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Canonicalized: query-string credentials stripped by the fetch library (design.md 1.5) — never present"
+        },
+        "fetched_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sha256_full": {
+          "type": "string",
+          "description": "Hash of the complete response body"
+        },
+        "sha256_stored": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Hash of archived bytes if truncated; null when identical to sha256_full"
+        },
+        "truncation_rule": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Deterministic extraction rule id, e.g. jmespath:products[?contains(productName,`OpenAI`)]"
+        },
+        "excerpt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 1000,
+          "description": "Minimal quoted excerpt for the public record (fair-use scale, design.md 1.5)"
+        },
+        "manifest_path": {
+          "type": "string",
+          "description": "Path to the public .meta.json manifest in llmreport-data"
+        },
+        "archive_path": {
+          "type": "string",
+          "description": "Path to raw bytes in PRIVATE llmreport-evidence"
+        },
+        "http_status": {
+          "type": "integer"
+        },
+        "etag": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "source_id": "openai-models-api",
+  "url": "https://api.openai.com/v1/models",
+  "fetched_at": "2026-07-01T06:21:00Z",
+  "sha256_full": "2222222222222222222222222222222222222222222222222222222222222222",
+  "title": "SYNTHETIC dirty fixture: raw request headers must never be committed",
+  "request_headers": {
+    "User-Agent": "TheLLMReportBot/1.0 (+https://thellmreport.com/bot)",
+    "Authorization": "Bearer sk-SYNTHETICSYNTHETICSYNTHETIC000000"
+  },
+  "redirect_chain": [],
+  "http_status": 200,
+  "etag": null
+}

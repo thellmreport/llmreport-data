@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/snapshots/models-api/v2.json",
+  "title": "models-API canonical snapshot (v2)",
+  "description": "design.md 1.2.3: {models: [{id, created|null, owned_by|null, endpoints[], context_window|null}]}. Fields absent from a provider's payload are null, never guessed.",
+  "type": "object",
+  "required": [
+    "models"
+  ],
+  "properties": {
+    "models": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "created",
+          "owned_by",
+          "endpoints",
+          "context_window"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": [
+              "integer",
+              "string",
+              "null"
+            ],
+            "description": "Provider-native creation stamp (epoch seconds or RFC3339 string); null when absent"
+          },
+          "owned_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endpoints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "context_window": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

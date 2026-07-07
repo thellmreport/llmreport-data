@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/data/limits.changed/v2.json",
+  "title": "limits.changed data (v2)",
+  "description": "design.md 1.2.2: {limit_kind: rpm|tpm|context|max_output, tier|null, old, new}.",
+  "type": "object",
+  "required": [
+    "limit_kind",
+    "tier",
+    "old",
+    "new"
+  ],
+  "properties": {
+    "limit_kind": {
+      "enum": [
+        "rpm",
+        "tpm",
+        "context",
+        "max_output"
+      ]
+    },
+    "tier": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "old": {
+      "type": "number"
+    },
+    "new": {
+      "type": "number"
+    }
+  },
+  "additionalProperties": false
+}

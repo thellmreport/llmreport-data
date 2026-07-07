@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/data/degradation.resolved/v2.json",
+  "title": "degradation.resolved data (v2)",
+  "description": "design.md 1.2.2 degradation.*: {signal, baseline, measured, window_hours, colo, probe_ids[]}.",
+  "type": "object",
+  "required": [
+    "signal",
+    "baseline",
+    "measured",
+    "window_hours",
+    "colo",
+    "probe_ids"
+  ],
+  "properties": {
+    "signal": {
+      "enum": [
+        "hash_churn",
+        "refusal_rate",
+        "latency_p50",
+        "latency_p95",
+        "token_drift"
+      ]
+    },
+    "baseline": {
+      "type": "number"
+    },
+    "measured": {
+      "type": "number"
+    },
+    "window_hours": {
+      "type": "number"
+    },
+    "colo": {
+      "type": "string"
+    },
+    "probe_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

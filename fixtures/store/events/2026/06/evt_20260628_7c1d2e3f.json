@@ -1,0 +1,47 @@
+{
+  "id": "evt_20260628_7c1d2e3f",
+  "type": "price.changed",
+  "provider": "mistral",
+  "model_id": "mistral-large-2508",
+  "observed_at": "2026-06-28T09:00:00Z",
+  "effective_at": null,
+  "summary": "mistral-large-2508 input price fell 20% to 1.60 USD/MTok across all tiers.",
+  "data": {
+    "entries": [
+      {
+        "dimension": {
+          "direction": "input",
+          "tier": "batch",
+          "region": "global",
+          "currency": "USD",
+          "unit": "per_mtok"
+        },
+        "old": 2.0,
+        "new": 1.6
+      }
+    ],
+    "regions_affected": 1,
+    "pct_change": -20.0
+  },
+  "evidence": [
+    {
+      "source_id": "mistral-docs-mirror",
+      "url": "https://github.com/mistralai/platform-docs-public",
+      "fetched_at": "2026-06-28T09:00:00Z",
+      "sha256_full": "0c8e5b1a9d7f3e2c4b6a8091f2e3d4c5b6a7980e1d2c3b4a5968778695a4b3c2",
+      "sha256_stored": null,
+      "truncation_rule": "jmespath:pricing[?model=='mistral-large-2508']",
+      "excerpt": null,
+      "manifest_path": "manifests/evidence/mistral-docs-mirror/2026-06-28T09-00-00Z.meta.json",
+      "archive_path": "mistral-docs-mirror/2026-06-28T09-00-00Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "collector.docs-mirror",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": null
+}

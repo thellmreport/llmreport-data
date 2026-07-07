@@ -1,0 +1,42 @@
+{
+  "id": "evt_20260701_698c2534",
+  "type": "capability.changed",
+  "provider": "google",
+  "model_id": "gemini-2.5-pro",
+  "observed_at": "2026-07-01T10:02:33Z",
+  "effective_at": null,
+  "summary": "gemini-2.5-pro gained the batchGenerateContent endpoint in the Gemini API model listing.",
+  "data": {
+    "capability": "endpoints",
+    "change_kind": "added",
+    "old": [
+      "generateContent"
+    ],
+    "new": [
+      "generateContent",
+      "batchGenerateContent"
+    ],
+    "notes": "supportedGenerationMethods now includes batchGenerateContent."
+  },
+  "evidence": [
+    {
+      "source_id": "google-gemini-models-api",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models",
+      "fetched_at": "2026-07-01T10:02:33Z",
+      "sha256_full": "166d7aa40d0eb527caf7b1c2be94533e2a4c4a1b2cf6269d0341895947e81fa2",
+      "sha256_stored": null,
+      "truncation_rule": null,
+      "excerpt": null,
+      "manifest_path": "manifests/evidence/google-gemini-models-api/2026-07-01T10-02-33Z.meta.json",
+      "archive_path": "google-gemini-models-api/2026-07-01T10-02-33Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "collector.models-api",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": null
+}

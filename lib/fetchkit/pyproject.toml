@@ -1,0 +1,20 @@
+[project]
+name = "fetchkit"
+version = "0.1.0"
+description = "Shared fetch library for The LLM Report collectors: registry allowlist enforcement, bot etiquette, redaction, evidence output, request-level audit log, alert-and-failover (design.md §1.3, §1.5, §1.6)."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fetchkit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

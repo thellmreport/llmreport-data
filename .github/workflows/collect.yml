@@ -1,0 +1,99 @@
+# ============================================================================
+# TEMPLATE - hourly collector run (design.md 1.3/1.7). NOT ACTIVE.
+#
+# Gated on the repository variable COLLECT_ENABLED == 'true'. Leave unset
+# until: (a) this repo exists on GitHub with branch protection + merge queue
+# per design.md 1.7, (b) bot identities + fine-grained tokens are provisioned
+# (1.7). Collector code already lives at collectors/src/llmreport_collectors.
+# Steps that need repo/tokens are marked TODO(activation).
+# ============================================================================
+name: collect (TEMPLATE)
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Minute 17 - deliberately off the top-of-hour thundering herd. Cron has
+    # no native jitter: per-source politeness jitter is applied IN-PROCESS by
+    # the fetch library (registry fetch_defaults.schedule_jitter = true), so
+    # individual hosts are hit at 17:00+rand, never in a synchronized burst.
+    - cron: "17 * * * *"
+
+permissions:
+  contents: write # TODO(activation): scope via the collector-bot fine-grained token instead
+
+concurrency:
+  group: collect
+  cancel-in-progress: false # never kill a half-finished evidence write; queue instead
+
+env:
+  UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/llmreport-venv # local-venv pattern
+  UV_PYTHON: "3.12"
+
+jobs:
+  collect:
+    if: ${{ vars.COLLECT_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2 # pinned
+        with:
+          fetch-depth: 1 # shallow clones mandated (design.md 1.1)
+
+      - uses: actions/setup-python@v5.3.0 # pinned
+        with:
+          python-version: "3.12"
+
+      - name: Install uv (pinned)
+        run: pip install uv==0.7.13
+
+      - name: Sync environment (locked)
+        run: uv sync --frozen
+
+      # Collectors live at collectors/src/llmreport_collectors, built on the
+      # fetchkit fetch library (identified UA, conditional GET, robots
+      # re-check per cycle, query-credential stripping). TODO(activation):
+      # inert until the repo + bot tokens exist; remove the guard then.
+      - name: Run collectors
+        run: |
+          echo "TODO(activation): uv run python -m llmreport_collectors --repo-root . --out ."
+          exit 1
+
+      - name: Lint the store before proposing the commit
+        run: >
+          uv run python -m llmreport_linter
+          --store . --schemas schemas --registry registry/sources.json
+          --emit-derived derived/state.json
+
+      - name: Guards
+        run: |
+          uv run python tools/guards/redaction_gate.py --root .
+          uv run python tools/guards/pii_guard.py --root .
+
+      # Merge-queue-compatible write path (design.md 1.7): collectors NEVER
+      # push to main. They push an ingest/collect-* branch and open a PR that
+      # enters the merge queue; the queue serializes all writers and re-runs
+      # the required checks (ci.yml). Writers implement rebase-retry
+      # (3 attempts, jittered) for branch-update contention and idempotent
+      # commit keys (skip when the identical sha256_full is already archived
+      # for the same source and window) - both live in collector code.
+      - name: Commit to ingest branch and open PR via merge queue
+        env:
+          GH_TOKEN: ${{ github.token }} # TODO(activation): collector-bot fine-grained PAT, contents:write, ingest/* only, no workflow scope
+        run: |
+          echo "TODO(activation): the push/PR flow below is inert until the repo exists."
+          exit 1
+          # --- activation flow (reference implementation) -------------------
+          # BRANCH="ingest/collect-${{ github.run_id }}"
+          # git config user.name  "llmreport-collector-bot"
+          # git config user.email "$COLLECTOR_BOT_EMAIL"  # bot identity secret; signed commits per 1.7
+          #   (identity literals stay out of the repo: the PII guard scans everything)
+          # git switch -c "$BRANCH"
+          # git add events/ snapshots/ manifests/ derived/
+          # git commit -m "collect: hourly tick $(date -u +%FT%TZ)"
+          # for attempt in 1 2 3; do   # rebase-retry, jittered (design.md 1.7)
+          #   if git push origin "$BRANCH"; then break; fi
+          #   sleep $((RANDOM % 20 + 5)); git fetch origin && git rebase origin/main
+          # done
+          # gh pr create --base main --head "$BRANCH" \
+          #   --title "collect: hourly tick" \
+          #   --body "Automated hourly collection. Required checks gate the merge."
+          # gh pr merge --auto --squash "$BRANCH"   # --auto = enter the merge queue

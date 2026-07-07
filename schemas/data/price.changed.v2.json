@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/data/price.changed/v2.json",
+  "title": "price.changed data (v2)",
+  "description": "design.md 1.2.2: a price-structure array, one entry per changed price point, plus regions_affected and pct_change. Aggregation rule: one price.changed event per (provider, canonical model, direction) per detection cycle; per-region/tier detail is summarized inside entries (the full meter diff is in evidence).",
+  "type": "object",
+  "required": [
+    "entries",
+    "regions_affected",
+    "pct_change"
+  ],
+  "properties": {
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://thellmreport.com/schemas/data/price-structure/v2.json"
+      }
+    },
+    "regions_affected": {
+      "type": "integer"
+    },
+    "pct_change": {
+      "type": "number"
+    }
+  },
+  "additionalProperties": false
+}

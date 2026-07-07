@@ -1,0 +1,120 @@
+# Required status checks for llmreport-data (design.md 1.7 branch protection):
+# schema validation + store linter + redaction gate + PII guard + pytest.
+# All jobs are deterministic and non-LLM.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  merge_group: # all writers land on main via the merge queue (design.md 1.7)
+
+permissions:
+  contents: read
+
+env:
+  # Local-venv pattern: the working copy may live on a slow/network mount, so
+  # the venv always goes to fast local disk. Mirrors the dev convention
+  # UV_PROJECT_ENVIRONMENT=$TEMP/llmreport-venv (see pyproject.toml).
+  UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/llmreport-venv
+  UV_PYTHON: "3.12"
+
+jobs:
+  validate:
+    name: schema + linter + guards + tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2 # pinned (design.md 1.1: shallow clones mandated)
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5.3.0 # pinned
+        with:
+          python-version: "3.12"
+
+      - name: Install uv (pinned)
+        run: pip install uv==0.7.13
+
+      - name: Sync environment (locked)
+        run: uv sync --frozen
+
+      - name: Schema hygiene (metaschema check)
+        run: >
+          uv run check-jsonschema --check-metaschema
+          schemas/*.json schemas/data/*.json schemas/snapshots/*.json
+          registry/schema/sources.schema.json
+
+      - name: Registry validates against its schema
+        run: >
+          uv run check-jsonschema
+          --schemafile registry/schema/sources.schema.json
+          registry/sources.json
+
+      - name: Store linter (computes effective status, emits derived/state.json)
+        run: >
+          uv run python -m llmreport_linter
+          --store . --schemas schemas --registry registry/sources.json
+          --emit-derived derived/state.json
+
+      - name: Redaction gate (design.md 1.5)
+        run: uv run python tools/guards/redaction_gate.py --root .
+
+      - name: PII guard (design.md 1.1)
+        run: uv run python tools/guards/pii_guard.py --root .
+
+      - name: pytest (linter + guards + fetchkit + collectors)
+        run: uv run pytest tools lib/fetchkit/tests collectors/tests -q
+
+  immutability:
+    # Event files are immutable once merged; verdict/publication/annotation/
+    # manifest chains are append-only (design.md 1.2/1.7). Git-diff-based, so
+    # it only runs where a base ref exists.
+    name: store immutability (append-only diff)
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    runs-on: ubuntu-24.04
+    steps:
+      # DOCUMENTED EXCEPTION to the design.md 1.1 fetch-depth:1 mandate: this
+      # job diffs base..head and attributes each commit in the range to a
+      # writer identity, which requires the connecting history. Read-only.
+      - uses: actions/checkout@v4.2.2 # pinned
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5.3.0 # pinned
+        with:
+          python-version: "3.12"
+
+      - name: Install uv (pinned)
+        run: pip install uv==0.7.13
+
+      - name: Sync environment (locked)
+        run: uv sync --frozen
+
+      - name: Resolve base sha
+        id: base
+        run: |
+          if [ "${{ github.event_name }}" = "merge_group" ]; then
+            echo "sha=${{ github.event.merge_group.base_sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enforce immutable events + append-only chains
+        run: >
+          uv run python -m llmreport_linter.immutability
+          --base "${{ steps.base.outputs.sha }}" --head HEAD
+
+      # Writer-identity path scoping (design.md 1.2/1.7): every commit in the
+      # range must stay inside its bot identity's allowed paths. Signed-commit
+      # verification (1.7) is enforced by branch protection settings, not here.
+      - name: Enforce writer path scopes
+        run: |
+          set -euo pipefail
+          for sha in $(git rev-list "${{ steps.base.outputs.sha }}"..HEAD); do
+            author=$(git log -1 --format='%ae' "$sha")
+            files=$(git diff-tree --no-commit-id --name-only -r "$sha")
+            if [ -n "$files" ]; then
+              # shellcheck disable=SC2086
+              uv run python -m llmreport_linter.path_scope --identity "$author" $files
+            fi
+          done

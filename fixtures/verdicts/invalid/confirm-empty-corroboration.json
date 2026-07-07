@@ -1,0 +1,9 @@
+{
+  "event_id": "evt_20260701_52940eaf",
+  "verdict": "confirm",
+  "rule": "two-source",
+  "corroborating_evidence": [],
+  "verified_by": "ma-session-9f31c2e4",
+  "verified_at": "2026-07-01T09:25:41Z",
+  "notes": "official-api + provider-docs: different independence classes; two-source satisfied."
+}

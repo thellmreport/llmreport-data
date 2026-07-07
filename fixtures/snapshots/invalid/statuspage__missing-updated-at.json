@@ -1,0 +1,12 @@
+{
+  "incidents": [
+    {
+      "id": "01j9zkx8q2",
+      "status": "resolved",
+      "components": [
+        "API",
+        "Chat Completions"
+      ]
+    }
+  ]
+}

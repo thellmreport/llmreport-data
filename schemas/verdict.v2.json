@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/verdict/v2.json",
+  "title": "Verifier verdict record (v2)",
+  "description": "Append-only verdict file, verdicts/<event_id>/<seq>.json (design.md 1.2). Written ONLY by the verifier bot identity, which structurally cannot write events/**. A confirm verdict must cite corroborating evidence manifest paths and name the rule (design.md 1.4.3).",
+  "type": "object",
+  "required": [
+    "event_id",
+    "verdict",
+    "rule",
+    "corroborating_evidence",
+    "verified_by",
+    "verified_at"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^evt_[0-9]{8}_[a-f0-9]{8}$"
+    },
+    "verdict": {
+      "enum": [
+        "confirm",
+        "reject",
+        "discrepancy"
+      ]
+    },
+    "rule": {
+      "anyOf": [
+        {
+          "enum": [
+            "two-source",
+            "direct-probe",
+            "provider-official"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Confirmation rule (design.md 1.4.3 a/b/c); null is permitted only on reject/discrepancy verdicts, where no confirmation rule applies"
+    },
+    "corroborating_evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Evidence manifest paths (manifests/evidence/...) cited by the verifying agent"
+    },
+    "verified_by": {
+      "type": "string",
+      "description": "Verifier Managed Agents session id"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "confirm"
+          }
+        },
+        "required": [
+          "verdict"
+        ]
+      },
+      "then": {
+        "properties": {
+          "rule": {
+            "enum": [
+              "two-source",
+              "direct-probe",
+              "provider-official"
+            ]
+          },
+          "corroborating_evidence": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "event_id": "evt_20260701_7d360a82",
+  "verdict": "discrepancy",
+  "rule": null,
+  "corroborating_evidence": [
+    "manifests/evidence/azure-docs-pricing/2026-07-01T07-40-00Z.meta.json"
+  ],
+  "verified_by": "ma-session-9f31c2e4",
+  "verified_at": "2026-07-01T09:31:02Z",
+  "notes": "Docs page shows 2.10 not 2.00 for the standard input meter; conflicting new value — opened as exceptions-queue discrepancy item, nothing publishes until resolved (design.md 1.4)."
+}

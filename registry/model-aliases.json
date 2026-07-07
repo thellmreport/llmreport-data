@@ -1,0 +1,95 @@
+{
+  "_README": "Model alias registry (design.md §1.2.4). One entry per canonical model; `canonical_id` is the join key for the deprecation/EOL calendar and per-stack Pro matching — the calendar shows one row per canonical model with per-provider EOL columns, never double-counting. `aliases` maps a provider namespace to the exact model ids that namespace uses for this model, including dated snapshot ids. Namespace keys: anthropic, openai, azure-openai, google-gemini, google-vertex, aws-bedrock, mistral, xai, openrouter, litellm. Seed sources: Anthropic's docs model table (which lists Anthropic/Bedrock/Vertex ids), OpenRouter /api/v1/models ids, LiteLLM model_prices_and_context_window.json keys. MAINTENANCE: (1) alias lists are append-only — never delete an id once observed in the wild; retired ids are still needed to resolve historical events; (2) when a collector sees a model id matching no alias, it opens an exceptions-queue item and the id is mapped here (new entry or new alias) before the event publishes; (3) `headline: true` marks models whose price.changed events are sev1 per schemas/severity.json — review the flag when a successor family ships; (4) edits go through CI schema validation and code review like any registry change; (5) ids below were seeded 2026-07-06 from public provider docs and must be re-verified against live collector output when collectors first run.",
+  "models": [
+    {
+      "canonical_id": "claude-opus-4-1",
+      "display_name": "Claude Opus 4.1",
+      "aliases": {
+        "anthropic": ["claude-opus-4-1", "claude-opus-4-1-20250805"],
+        "aws-bedrock": [
+          "anthropic.claude-opus-4-1-20250805-v1:0",
+          "us.anthropic.claude-opus-4-1-20250805-v1:0"
+        ],
+        "google-vertex": ["claude-opus-4-1@20250805"],
+        "openrouter": ["anthropic/claude-opus-4.1"],
+        "litellm": ["claude-opus-4-1-20250805"]
+      },
+      "headline": true
+    },
+    {
+      "canonical_id": "claude-sonnet-4-5",
+      "display_name": "Claude Sonnet 4.5",
+      "aliases": {
+        "anthropic": ["claude-sonnet-4-5", "claude-sonnet-4-5-20250929"],
+        "aws-bedrock": [
+          "anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+        ],
+        "google-vertex": ["claude-sonnet-4-5@20250929"],
+        "openrouter": ["anthropic/claude-sonnet-4.5"],
+        "litellm": ["claude-sonnet-4-5-20250929"]
+      },
+      "headline": true
+    },
+    {
+      "canonical_id": "claude-haiku-4-5",
+      "display_name": "Claude Haiku 4.5",
+      "aliases": {
+        "anthropic": ["claude-haiku-4-5", "claude-haiku-4-5-20251001"],
+        "aws-bedrock": [
+          "anthropic.claude-haiku-4-5-20251001-v1:0",
+          "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+        ],
+        "google-vertex": ["claude-haiku-4-5@20251001"],
+        "openrouter": ["anthropic/claude-haiku-4.5"],
+        "litellm": ["claude-haiku-4-5-20251001"]
+      },
+      "headline": true
+    },
+    {
+      "canonical_id": "gpt-5-1",
+      "display_name": "GPT-5.1",
+      "aliases": {
+        "openai": ["gpt-5.1"],
+        "azure-openai": ["gpt-5.1"],
+        "openrouter": ["openai/gpt-5.1"],
+        "litellm": ["gpt-5.1", "azure/gpt-5.1"]
+      },
+      "headline": true
+    },
+    {
+      "canonical_id": "gpt-4o",
+      "display_name": "GPT-4o",
+      "aliases": {
+        "openai": ["gpt-4o", "gpt-4o-2024-08-06", "gpt-4o-2024-11-20"],
+        "azure-openai": ["gpt-4o"],
+        "openrouter": ["openai/gpt-4o"],
+        "litellm": ["gpt-4o", "azure/gpt-4o"]
+      },
+      "headline": false
+    },
+    {
+      "canonical_id": "gemini-2-5-pro",
+      "display_name": "Gemini 2.5 Pro",
+      "aliases": {
+        "google-gemini": ["gemini-2.5-pro"],
+        "google-vertex": ["gemini-2.5-pro"],
+        "openrouter": ["google/gemini-2.5-pro"],
+        "litellm": ["gemini/gemini-2.5-pro", "vertex_ai/gemini-2.5-pro"]
+      },
+      "headline": true
+    },
+    {
+      "canonical_id": "gemini-3-pro",
+      "display_name": "Gemini 3 Pro",
+      "aliases": {
+        "google-gemini": ["gemini-3-pro-preview"],
+        "google-vertex": ["gemini-3-pro-preview"],
+        "openrouter": ["google/gemini-3-pro-preview"],
+        "litellm": ["gemini/gemini-3-pro-preview"]
+      },
+      "headline": true
+    }
+  ]
+}

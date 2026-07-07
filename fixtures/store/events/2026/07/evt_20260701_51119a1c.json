@@ -1,0 +1,42 @@
+{
+  "id": "evt_20260701_51119a1c",
+  "type": "model.updated",
+  "provider": "openai",
+  "model_id": "gpt-5.2",
+  "observed_at": "2026-07-01T07:03:11Z",
+  "effective_at": null,
+  "summary": "gpt-5.2 docs page now lists audio input; modalities extended to text+image+audio.",
+  "data": {
+    "context_window": 400000,
+    "modalities": [
+      "text",
+      "image",
+      "audio"
+    ],
+    "endpoints": [
+      "/v1/responses"
+    ],
+    "notes": "Docs model card gained an audio-input row; only OpenRouter and LiteLLM corroborate so far (shared provider-docs lineage - cannot two-source, design.md 1.4a)."
+  },
+  "evidence": [
+    {
+      "source_id": "openai-models-docs",
+      "url": "https://developers.openai.com/api/docs/models",
+      "fetched_at": "2026-07-01T07:03:11Z",
+      "sha256_full": "f5efc469cc3ff7e4518af067ef91966d6bb3763053ce988f322eae6c18812719",
+      "sha256_stored": null,
+      "truncation_rule": "css:table.model-capabilities",
+      "excerpt": "Audio input: supported",
+      "manifest_path": "manifests/evidence/openai-models-docs/2026-07-01T07-03-11Z.meta.json",
+      "archive_path": "openai-models-docs/2026-07-01T07-03-11Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "collector.docs-html",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": null
+}

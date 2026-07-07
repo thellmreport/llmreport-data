@@ -1,0 +1,58 @@
+{
+  "id": "evt_20260701_7d360a82",
+  "type": "price.changed",
+  "provider": "azure-openai",
+  "model_id": "gpt-4o",
+  "observed_at": "2026-07-01T06:15:00Z",
+  "effective_at": null,
+  "summary": "Azure OpenAI gpt-4o input price cut 20% (standard 2.50 to 2.00, batch 1.25 to 1.00 USD/MTok) across 38 regions.",
+  "data": {
+    "entries": [
+      {
+        "dimension": {
+          "direction": "input",
+          "tier": "standard",
+          "region": "global",
+          "currency": "EUR",
+          "unit": "per_mtok"
+        },
+        "old": 2.5,
+        "new": 2.0
+      },
+      {
+        "dimension": {
+          "direction": "input",
+          "tier": "batch",
+          "region": "global",
+          "currency": "USD",
+          "unit": "per_mtok"
+        },
+        "old": 1.25,
+        "new": 1.0
+      }
+    ],
+    "regions_affected": 38,
+    "pct_change": -20.0
+  },
+  "evidence": [
+    {
+      "source_id": "azure-retail-prices",
+      "url": "https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Azure%20OpenAI%27",
+      "fetched_at": "2026-07-01T06:15:00Z",
+      "sha256_full": "e89d33fb40ae2bfa29b63dd3611d70c1e2a22d504450bbc8519ea1e118c820b4",
+      "sha256_stored": null,
+      "truncation_rule": "jmespath:Items[?contains(meterName,`gpt-4o`)]",
+      "excerpt": null,
+      "manifest_path": "manifests/evidence/azure-retail-prices/2026-07-01T06-15-00Z.meta.json",
+      "archive_path": "azure-retail-prices/2026-07-01T06-15-00Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "collector.pricing-api",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": null
+}

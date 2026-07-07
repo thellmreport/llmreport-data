@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/identity-key/v2.json",
+  "title": "Candidate identity key (v2)",
+  "description": "design.md 1.4: the candidate identity key is (provider, canonical_model_id, event_type, normalized_field_path, old_value -> new_value) with values canonicalized (numbers normalized, strings NFC-trimmed). The event id is minted from this key, so the same real-world change observed via different sources on different ticks resolves to the same event id.",
+  "$comment": "Minting: evt_<observed_at UTC date>_<hash8>, where hash8 is the first 8 hex chars of sha256 over the canonical serialization of this object. design.md does not pin the serialization; pinned here (Phase 0 resolution) as compact JSON with lexicographically sorted keys, UTF-8, separators ',' and ':'.",
+  "type": "object",
+  "required": [
+    "provider",
+    "canonical_model_id",
+    "event_type",
+    "normalized_field_path",
+    "old_value",
+    "new_value"
+  ],
+  "properties": {
+    "provider": {
+      "enum": [
+        "openai",
+        "anthropic",
+        "google",
+        "aws-bedrock",
+        "azure-openai",
+        "mistral",
+        "xai"
+      ]
+    },
+    "canonical_model_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Canonical id via registry/model-aliases.json; null for non-model-scoped events (outage.*, policy.changed)"
+    },
+    "event_type": {
+      "enum": [
+        "model.released",
+        "model.updated",
+        "model.deprecated",
+        "model.retired",
+        "price.changed",
+        "limits.changed",
+        "capability.changed",
+        "outage.started",
+        "outage.resolved",
+        "degradation.detected",
+        "degradation.resolved",
+        "policy.changed",
+        "correction.issued"
+      ]
+    },
+    "normalized_field_path": {
+      "type": "string",
+      "description": "Materiality-table field path of the delta"
+    },
+    "old_value": {
+      "description": "Canonicalized previous value (any JSON value; null for appearance events)"
+    },
+    "new_value": {
+      "description": "Canonicalized new value (any JSON value; null for disappearance events)"
+    }
+  },
+  "additionalProperties": false
+}

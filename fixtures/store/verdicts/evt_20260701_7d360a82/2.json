@@ -1,0 +1,11 @@
+{
+  "event_id": "evt_20260701_7d360a82",
+  "verdict": "confirm",
+  "rule": "direct-probe",
+  "corroborating_evidence": [
+    "manifests/evidence/azure-retail-prices-api/2026-07-02T09-55-00Z.meta.json"
+  ],
+  "verified_by": "ma-session-c07d11ab",
+  "verified_at": "2026-07-02T10:00:00Z",
+  "notes": "Discrepancy resolved: direct re-probe of the Retail Prices API reproduces 2.00; the docs page lagged. Confirmed via rule (b)."
+}

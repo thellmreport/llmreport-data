@@ -1,0 +1,36 @@
+{
+  "id": "evt_20260703_9a756fcc",
+  "type": "correction.issued",
+  "provider": "mistral",
+  "model_id": "mistral-large-2508",
+  "observed_at": "2026-07-03T11:00:00Z",
+  "effective_at": null,
+  "summary": "Correction: the 2026-06-28 mistral-large-2508 price-cut event overstated scope - the cut applied to the batch tier only, not standard.",
+  "data": {
+    "original_claim": "mistral-large-2508 input price fell 20% to 1.60 USD/MTok across all tiers.",
+    "corrected_claim": "The 20% cut applies to the batch tier only; the standard tier is unchanged at 2.00 USD/MTok.",
+    "root_cause": "normalizer_bug",
+    "detected_by": "spot_audit"
+  },
+  "evidence": [
+    {
+      "source_id": "mistral-docs-mirror",
+      "url": "https://github.com/mistralai/platform-docs-public",
+      "fetched_at": "2026-07-03T11:00:00Z",
+      "sha256_full": "e25c4e153048d6615a2259180e53a8382625308d1cf81fcb80d1d3968c4b282a",
+      "sha256_stored": null,
+      "truncation_rule": "jmespath:pricing[?model=='mistral-large-2508']",
+      "excerpt": null,
+      "manifest_path": "manifests/evidence/mistral-docs-mirror/2026-07-03T11-00-00Z.meta.json",
+      "archive_path": "mistral-docs-mirror/2026-07-03T11-00-00Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "interpreter.daily",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": "evt_20260628_7c1d2e3f"
+}

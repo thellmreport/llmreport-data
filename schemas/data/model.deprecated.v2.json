@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/data/model.deprecated/v2.json",
+  "title": "model.deprecated data (v2)",
+  "description": "design.md 1.2.2: {eol_date|null, shutdown_date|null, replacement_model|null, source_kind: docs|api-absence|changelog}.",
+  "type": "object",
+  "required": [
+    "eol_date",
+    "shutdown_date",
+    "replacement_model",
+    "source_kind"
+  ],
+  "properties": {
+    "eol_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "shutdown_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "replacement_model": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_kind": {
+      "enum": [
+        "docs",
+        "api-absence",
+        "changelog"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "$comment": "Rule-(c) disappearance carve-out (design.md 1.4c): when source_kind='api-absence' the deprecation/retirement is a negative inference from a model's absence in a /v1/models listing and is entitlement-scoped — the probe account's tier/region may simply lack access (caveat recorded per provider in registry/sources.json). Such events are EXCLUDED from rule-(c) provider-official confirmation and REQUIRE class-(a) corroboration (docs page, provider changelog, or a second account/region probe) before a confirm verdict. Enforced by the verifier and store linter; this schema carries the signal in source_kind."
+}

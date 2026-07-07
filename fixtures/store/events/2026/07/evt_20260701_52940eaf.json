@@ -1,0 +1,54 @@
+{
+  "id": "evt_20260701_52940eaf",
+  "type": "model.released",
+  "provider": "anthropic",
+  "model_id": "claude-sonnet-4-5",
+  "observed_at": "2026-07-01T06:12:04Z",
+  "effective_at": null,
+  "summary": "New model claude-sonnet-4-5 appeared in Anthropic /v1/models with a 1M-token context window.",
+  "data": {
+    "context_window": 1000000,
+    "modalities": [
+      "text",
+      "image"
+    ],
+    "endpoints": [
+      "/v1/messages"
+    ],
+    "notes": "Listed with created_at 2026-07-01; docs model table not yet updated at observation time."
+  },
+  "evidence": [
+    {
+      "source_id": "anthropic-models-api",
+      "url": "https://api.anthropic.com/v1/models",
+      "fetched_at": "2026-07-01T06:12:04Z",
+      "sha256_full": "49d6e20a97a0cec1acc7de1288e804e5595ecf6873050ed98acc97f18d3c688e",
+      "sha256_stored": null,
+      "truncation_rule": null,
+      "excerpt": "{\"id\": \"claude-sonnet-4-5\", \"created_at\": \"2026-07-01T00:00:00Z\"}",
+      "manifest_path": "manifests/evidence/anthropic-models-api/2026-07-01T06-12-04Z.meta.json",
+      "archive_path": "anthropic-models-api/2026-07-01T06-12-04Z.bin",
+      "http_status": 200,
+      "etag": null
+    },
+    {
+      "source_id": "anthropic-models-docs",
+      "url": "https://platform.claude.com/docs/en/docs/about-claude/models/overview",
+      "fetched_at": "2026-07-01T09:20:15Z",
+      "sha256_full": "b1d4e7f0a3c6985b2e5d8f1a4c7e0b3d6f9a2c5e8b1d4f7a0c3e6d9b2f5a8c1e",
+      "sha256_stored": null,
+      "truncation_rule": "css:table.models-overview",
+      "excerpt": "claude-sonnet-4-5 | 1,000,000 tokens",
+      "manifest_path": "manifests/evidence/anthropic-docs-models/2026-07-01T09-20-15Z.meta.json",
+      "archive_path": "anthropic-docs-models/2026-07-01T09-20-15Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "collector.models-api",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": null
+}

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/snapshots/statuspage/v2.json",
+  "title": "statuspage canonical snapshot (v2)",
+  "description": "design.md 1.2.3: {incidents: [{id, status, components[], updated_at}]}.",
+  "type": "object",
+  "required": [
+    "incidents"
+  ],
+  "properties": {
+    "incidents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "components",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "description": "Provider-native lifecycle value (e.g. investigating|identified|monitoring|resolved|postmortem)"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

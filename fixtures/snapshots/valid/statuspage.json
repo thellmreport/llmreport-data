@@ -1,0 +1,13 @@
+{
+  "incidents": [
+    {
+      "id": "01j9zkx8q2",
+      "status": "resolved",
+      "components": [
+        "API",
+        "Chat Completions"
+      ],
+      "updated_at": "2026-07-01T15:47:30Z"
+    }
+  ]
+}

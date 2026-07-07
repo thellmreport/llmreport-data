@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/data/model.released/v2.json",
+  "title": "model.released data (v2)",
+  "description": "design.md 1.2.2: {context_window|null, modalities[], endpoints[], notes}. Fields absent from a provider's payload are null, never guessed.",
+  "type": "object",
+  "required": [
+    "context_window",
+    "modalities",
+    "endpoints",
+    "notes"
+  ],
+  "properties": {
+    "context_window": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "modalities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

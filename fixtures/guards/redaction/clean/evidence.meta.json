@@ -1,0 +1,11 @@
+{
+  "source_id": "anthropic-models-api",
+  "url": "https://api.anthropic.com/v1/models",
+  "fetched_at": "2026-07-01T06:12:04Z",
+  "sha256_full": "49d6e20a97a0cec1acc7de1288e804e5595ecf6873050ed98acc97f18d3c688e",
+  "title": "Anthropic models API",
+  "canonical": "https://api.anthropic.com/v1/models",
+  "redirect_chain": [],
+  "http_status": 200,
+  "etag": null
+}

@@ -1,0 +1,63 @@
+{
+  "name": "severity-taxonomy",
+  "version": "2.0.0",
+  "spec": "design.md 1.2.3",
+  "note": "'High-severity diff' anywhere in design.md means sev1. Drives the exception-dispatch path (design.md 5.2).",
+  "levels": [
+    {
+      "level": "sev1",
+      "dispatch": {
+        "mechanism": "repository_dispatch",
+        "target": "exception-session"
+      },
+      "criteria": [
+        {
+          "event_type": "model.retired",
+          "condition": "data.eol_date != null or data.shutdown_date != null"
+        },
+        {
+          "event_type": "model.deprecated",
+          "condition": "data.eol_date != null or data.shutdown_date != null"
+        },
+        {
+          "event_type": "price.changed",
+          "condition": "abs(data.pct_change) >= 5 and registry/model-aliases.json[canonical_id].headline == true"
+        },
+        {
+          "event_type": "outage.started",
+          "condition": "data.components intersects the provider's API components"
+        }
+      ]
+    },
+    {
+      "level": "sev2",
+      "dispatch": {
+        "mechanism": "daily-interpreter-run",
+        "target": "next-scheduled-run"
+      },
+      "criteria": [
+        {
+          "event_type": "*",
+          "condition": "default: any other confirmed-track change not matching sev1 or sev3"
+        }
+      ]
+    },
+    {
+      "level": "sev3",
+      "dispatch": {
+        "mechanism": "weekly-rollup",
+        "target": "weekly-diff"
+      },
+      "criteria": [
+        {
+          "event_type": "limits.changed",
+          "condition": "minor limit adjustment"
+        },
+        {
+          "event_type": "*",
+          "condition": "cosmetic change"
+        }
+      ]
+    }
+  ]
+}

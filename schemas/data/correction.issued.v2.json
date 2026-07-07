@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/data/correction.issued/v2.json",
+  "title": "correction.issued data (v2)",
+  "description": "design.md 1.2.2: {original_claim, corrected_claim, root_cause, detected_by}. The envelope's correction_of field carries the corrected event id.",
+  "type": "object",
+  "required": [
+    "original_claim",
+    "corrected_claim",
+    "root_cause",
+    "detected_by"
+  ],
+  "properties": {
+    "original_claim": {
+      "type": "string"
+    },
+    "corrected_claim": {
+      "type": "string"
+    },
+    "root_cause": {
+      "enum": [
+        "source_error",
+        "normalizer_bug",
+        "verification_gap",
+        "probe_artifact",
+        "editorial"
+      ]
+    },
+    "detected_by": {
+      "enum": [
+        "spot_audit",
+        "reader_report",
+        "reverify",
+        "flap"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

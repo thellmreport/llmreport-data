@@ -1,0 +1,43 @@
+{
+  "page": {
+    "id": "2kbc0d48tv3j",
+    "name": "OpenAI",
+    "url": "https://status.openai.com",
+    "updated_at": "2026-07-06T17:10:00.000+00:00"
+  },
+  "status": {
+    "indicator": "major",
+    "description": "Partial System Outage"
+  },
+  "components": [
+    {
+      "id": "cmp-api",
+      "name": "API",
+      "status": "degraded_performance"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "inc-new-api-errors",
+      "name": "Elevated error rates on the API",
+      "status": "investigating",
+      "impact": "major",
+      "shortlink": "https://stspg.io/new1",
+      "created_at": "2026-07-06T17:05:00.000+00:00",
+      "updated_at": "2026-07-06T17:08:00.000+00:00",
+      "components": [
+        {
+          "id": "cmp-api",
+          "name": "API",
+          "status": "degraded_performance"
+        },
+        {
+          "id": "cmp-chat",
+          "name": "Chat Completions",
+          "status": "degraded_performance"
+        }
+      ]
+    }
+  ],
+  "scheduled_maintenances": []
+}

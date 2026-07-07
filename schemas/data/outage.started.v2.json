@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/data/outage.started/v2.json",
+  "title": "outage.started data (v2)",
+  "description": "design.md 1.2.2 outage.*: {incident_id, components[], provider_status_url, severity_reported}.",
+  "type": "object",
+  "required": [
+    "incident_id",
+    "components",
+    "provider_status_url",
+    "severity_reported"
+  ],
+  "properties": {
+    "incident_id": {
+      "type": "string"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provider_status_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "severity_reported": {
+      "type": "string",
+      "description": "Severity exactly as the provider's status page reports it"
+    }
+  },
+  "additionalProperties": false
+}

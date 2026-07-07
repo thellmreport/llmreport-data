@@ -1,0 +1,17 @@
+{
+  "page_url": "https://docs.anthropic.com/en/docs/about-claude/models",
+  "extracted": [
+    {
+      "field_path": "models.claude-sonnet-4-5.context_window",
+      "value": 1000000
+    },
+    {
+      "field_path": "models.claude-sonnet-4-5.modalities",
+      "value": [
+        "text",
+        "image"
+      ]
+    }
+  ],
+  "extraction_rule_id": "anthropic-models-table@v3"
+}

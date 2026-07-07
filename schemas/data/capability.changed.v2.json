@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/data/capability.changed/v2.json",
+  "title": "capability.changed data (v2)",
+  "description": "Type is in the design.md 1.2.1 enum but its data fields are not pinned in 1.2.2; this shape is pinned here (Phase 0 resolution): the capability that changed (modality, endpoint, feature flag), how it changed, and canonicalized old/new values.",
+  "type": "object",
+  "required": [
+    "capability",
+    "change_kind",
+    "old",
+    "new"
+  ],
+  "properties": {
+    "capability": {
+      "type": "string",
+      "description": "Normalized capability name, e.g. 'endpoints', 'modalities', 'tool_use', 'structured_outputs'"
+    },
+    "change_kind": {
+      "enum": [
+        "added",
+        "removed",
+        "modified"
+      ]
+    },
+    "old": {
+      "description": "Canonicalized previous value; null when the capability is new"
+    },
+    "new": {
+      "description": "Canonicalized new value; null when the capability was removed"
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

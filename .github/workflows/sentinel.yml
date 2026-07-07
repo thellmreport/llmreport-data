@@ -1,0 +1,113 @@
+# Weekly compliance sentinels (registry/sources.json "sentinels", weekly
+# cadence). Two jobs:
+#
+#   aws-carveout        - the AWS Site Terms CC BY-SA 4.0 documentation
+#                         carve-out sentence + the AWS AUP (sentinel
+#                         "aws-carveout"; sweep dissents B1/B2/B3). Fetched
+#                         wayback-default - direct fetch only on counsel
+#                         sign-off. If the carve-out sentence is removed or
+#                         modified, or the AUP changes, the clearance verdict
+#                         LAPSES TO EXCLUDE: docs.aws.amazon.com sources flip
+#                         excluded=true and collectors auto-switch to
+#                         ListFoundationModels lifecycle + Price List diffs.
+#
+#   weekly-sentinels    - every other registry sentinel with cadence weekly
+#                         (currently mistral-legal-hub-watch). Every-cycle and
+#                         every-fetch sentinels run inside the hourly
+#                         collectors, not here.
+#
+# Every trigger opens an exceptions-queue item; nothing auto-adapts silently.
+name: sentinels (weekly)
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "29 7 * * 1" # Mondays 07:29 UTC, after robots-recheck
+
+permissions:
+  contents: read
+  issues: write # exceptions-queue items are GitHub issues
+
+env:
+  UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/llmreport-venv # local-venv pattern
+  UV_PYTHON: "3.12"
+
+jobs:
+  aws-carveout:
+    name: AWS carve-out + AUP sentinel
+    # Gated until the sentinels module lands (Phase 1); if enabled early, the
+    # TODO step fails loudly rather than pretending the check ran.
+    if: ${{ vars.SENTINELS_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2 # pinned
+        with:
+          fetch-depth: 1 # shallow clones mandated (design.md 1.1)
+
+      - uses: actions/setup-python@v5.3.0 # pinned
+        with:
+          python-version: "3.12"
+
+      - name: Install uv (pinned)
+        run: pip install uv==0.7.13
+
+      - name: Sync environment (locked)
+        run: uv sync --frozen
+
+      # TODO(activation): sentinels module (Phase 1). Contract for aws-carveout:
+      #   - resolve watch list from registry sentinel record "aws-carveout"
+      #     (aws.amazon.com/terms + aws.amazon.com/aup),
+      #   - fetch via Wayback by default (fetch_via: wayback-default; direct
+      #     only on counsel sign-off, sweep dissent B2),
+      #   - locate the CC BY-SA 4.0 documentation carve-out sentence and hash
+      #     it; diff the AUP against the last cleared hash,
+      #   - trigger => nonzero exit + report for the exceptions queue AND a
+      #     prepared PR flipping excluded=true on all docs.aws.amazon.com
+      #     sources (human/oversight merges it; nothing auto-merges).
+      - name: Check AWS Site Terms carve-out sentence + AUP
+        run: |
+          echo "TODO(activation): uv run python -m sentinels.run --registry registry/sources.json --sentinel aws-carveout --out ${{ runner.temp }}/aws-carveout.json"
+          exit 1
+
+      - name: Open exceptions-queue item on trigger
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "TODO(activation): gh issue create --label exceptions-queue,sentinel,aws --title 'AWS carve-out/AUP sentinel triggered - verdict lapses to EXCLUDE' --body-file ${{ runner.temp }}/aws-carveout.json"
+
+  weekly-sentinels:
+    name: other weekly-cadence sentinels
+    if: ${{ vars.SENTINELS_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2 # pinned
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5.3.0 # pinned
+        with:
+          python-version: "3.12"
+
+      - name: Install uv (pinned)
+        run: pip install uv==0.7.13
+
+      - name: Sync environment (locked)
+        run: uv sync --frozen
+
+      # TODO(activation): runs every registry sentinel whose cadence is
+      # "weekly" except aws-carveout (dedicated job above). Currently:
+      #   - mistral-legal-hub-watch: new policy document appearing on
+      #     legal.mistral.ai (can appear without a robots.txt change) =>
+      #     exceptions-queue item + route to ToU clearance (sweep 2.3).
+      - name: Run weekly sentinels
+        run: |
+          echo "TODO(activation): uv run python -m sentinels.run --registry registry/sources.json --cadence weekly --exclude aws-carveout --out ${{ runner.temp }}/weekly-sentinels.json"
+          exit 1
+
+      - name: Open exceptions-queue item on trigger
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "TODO(activation): gh issue create --label exceptions-queue,sentinel --title 'weekly sentinel triggered' --body-file ${{ runner.temp }}/weekly-sentinels.json"

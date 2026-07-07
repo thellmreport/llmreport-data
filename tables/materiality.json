@@ -1,0 +1,81 @@
+{
+  "name": "materiality-table",
+  "version": "2.0.0",
+  "spec": "design.md 1.2.3",
+  "definition": "A 'material delta' is any change to a field path listed in rules[]. A delta on a field path listed in neither rules[] nor ignore[] is logged to the exceptions queue as diff.unclassified and never auto-published.",
+  "rules": [
+    {
+      "source_class": "models-api",
+      "field_path": "models[].id",
+      "delta": "added",
+      "emits": "model.released"
+    },
+    {
+      "source_class": "models-api",
+      "field_path": "models[].id",
+      "delta": "removed",
+      "emits": "model.deprecated",
+      "note": "Negative inference — rule-(c) carve-out (design.md 1.4c): entitlement-scoped; event data.source_kind='api-absence'; requires class-(a) corroboration before confirmation."
+    },
+    {
+      "source_class": "models-api",
+      "field_path": "models[].context_window",
+      "delta": "modified",
+      "emits": "limits.changed"
+    },
+    {
+      "source_class": "models-api",
+      "field_path": "models[].endpoints",
+      "delta": "modified",
+      "emits": "capability.changed"
+    },
+    {
+      "source_class": "pricing-api",
+      "field_path": "prices[].value",
+      "delta": "modified",
+      "emits": "price.changed"
+    },
+    {
+      "source_class": "docs-html",
+      "field_path": "extracted[].value",
+      "delta": "modified",
+      "emits": "by-extraction-rule",
+      "note": "docs-HTML extraction rules are versioned code (design.md 1.2.3); each extraction_rule_id declares its target event type in the source registry. Rule output with no declared type falls through to diff.unclassified."
+    },
+    {
+      "source_class": "statuspage",
+      "field_path": "incidents[].id",
+      "delta": "added",
+      "emits": "outage.started"
+    },
+    {
+      "source_class": "statuspage",
+      "field_path": "incidents[].status",
+      "delta": "modified",
+      "emits": "outage.resolved",
+      "condition": "new_value in ['resolved','postmortem']"
+    }
+  ],
+  "ignore": [
+    {
+      "source_class": "docs-html",
+      "aspect": "cosmetic",
+      "description": "Markup/styling-only changes, boilerplate, navigation, footers — never surfaced by extraction rules"
+    },
+    {
+      "source_class": "*",
+      "aspect": "ordering",
+      "description": "Array element reordering with equal canonicalized content"
+    },
+    {
+      "source_class": "*",
+      "aspect": "whitespace",
+      "description": "Whitespace-only string deltas (strings are NFC-trimmed before comparison, design.md 1.4)"
+    }
+  ],
+  "unlisted_field_path": {
+    "emits": "diff.unclassified",
+    "route": "exceptions-queue",
+    "auto_publish": false
+  }
+}

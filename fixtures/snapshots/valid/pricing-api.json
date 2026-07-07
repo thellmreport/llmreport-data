@@ -1,0 +1,26 @@
+{
+  "prices": [
+    {
+      "model_ref": "gpt-4o",
+      "dimension": {
+        "direction": "input",
+        "tier": "standard",
+        "region": "global",
+        "currency": "USD",
+        "unit": "per_mtok"
+      },
+      "value": 2.0
+    },
+    {
+      "model_ref": "gpt-4o",
+      "dimension": {
+        "direction": "output",
+        "tier": "standard",
+        "region": "global",
+        "currency": "USD",
+        "unit": "per_mtok"
+      },
+      "value": 8.0
+    }
+  ]
+}

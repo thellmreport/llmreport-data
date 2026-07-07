@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/data/price-structure/v2.json",
+  "title": "Price-structure entry (v2)",
+  "description": "design.md 1.2.2 price.changed: one entry per changed price point.",
+  "type": "object",
+  "required": [
+    "dimension",
+    "old",
+    "new"
+  ],
+  "properties": {
+    "dimension": {
+      "$ref": "#/$defs/dimension"
+    },
+    "old": {
+      "type": "number"
+    },
+    "new": {
+      "type": "number"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "dimension": {
+      "type": "object",
+      "required": [
+        "direction",
+        "tier",
+        "region",
+        "currency",
+        "unit"
+      ],
+      "properties": {
+        "direction": {
+          "enum": [
+            "input",
+            "output"
+          ]
+        },
+        "tier": {
+          "enum": [
+            "standard",
+            "batch",
+            "cached_read",
+            "cached_write",
+            "priority"
+          ]
+        },
+        "region": {
+          "type": "string",
+          "description": "Region name, or the literal 'global'"
+        },
+        "currency": {
+          "const": "USD"
+        },
+        "unit": {
+          "const": "per_mtok"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

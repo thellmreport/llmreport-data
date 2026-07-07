@@ -1,0 +1,47 @@
+# Shared pyproject for all llmreport-data Python tooling (store linter, CI guards,
+# fetchkit and the collectors). One project = one venv = one `uv sync` in CI.
+#
+# Local dev note (SMB-mounted working copy): keep the venv on local disk —
+#   PowerShell:  $env:UV_PROJECT_ENVIRONMENT = "$env:TEMP\llmreport-venv"
+#   bash:        export UV_PROJECT_ENVIRONMENT=/tmp/llmreport-venv
+# CI sets UV_PROJECT_ENVIRONMENT to $RUNNER_TEMP/llmreport-venv (see .github/workflows/).
+
+[project]
+name = "llmreport-tools"
+version = "0.1.0"
+description = "Store linter and CI guards for the llmreport-data typed change-event store (thellmreport.com, design.md 1.2/1.4/1.7)"
+requires-python = ">=3.12"
+dependencies = [
+  "jsonschema[format-nongpl]>=4.23,<5",
+  "fetchkit",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3,<9",
+  "check-jsonschema>=0.31",
+]
+
+[tool.uv.workspace]
+# lib/fetchkit (shared fetch library) is a workspace member: one lock, one
+# venv, one `uv sync` covers linter + guards + fetchkit in CI.
+members = ["lib/fetchkit"]
+
+[tool.uv.sources]
+fetchkit = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "tools/linter/llmreport_linter",
+  "collectors/src/llmreport_collectors",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tools", "lib/fetchkit/tests", "collectors/tests"]
+# Guards are standalone scripts (not an installed package); make them importable in tests.
+pythonpath = ["tools/guards"]
+addopts = "-p no:cacheprovider"

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/data/policy.changed/v2.json",
+  "title": "policy.changed data (v2)",
+  "description": "design.md 1.2.2: {document: <registry policy source_id>, section|null, change_kind: added|removed|modified}. Produced by the weekly robots/ToS sweep job (design.md 1.3).",
+  "type": "object",
+  "required": [
+    "document",
+    "section",
+    "change_kind"
+  ],
+  "properties": {
+    "document": {
+      "type": "string",
+      "description": "Registry policy source_id (registry/sources.json)"
+    },
+    "section": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "change_kind": {
+      "enum": [
+        "added",
+        "removed",
+        "modified"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

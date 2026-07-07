@@ -1,0 +1,36 @@
+{
+  "id": "evt_20260701_51119a1c",
+  "type": "model.deprecated",
+  "provider": "openai",
+  "model_id": "gpt-4.1",
+  "observed_at": "2026-07-01T06:14:52Z",
+  "effective_at": null,
+  "summary": "gpt-4.1 disappeared from /v1/models for the probe account. Negative inference: entitlement-scoped, requires class-(a) corroboration before confirmation (rule-c carve-out).",
+  "data": {
+    "eol_date": null,
+    "shutdown_date": null,
+    "replacement_model": "gpt-5.2",
+    "source_kind": "api-absence"
+  },
+  "evidence": [
+    {
+      "source_id": "openai-models-api",
+      "url": "https://api.openai.com/v1/models",
+      "fetched_at": "2026-07-01T06:14:52Z",
+      "sha256_full": "3cefbd58e94c6b7dac6b16d1ad9d5b3f6ca46fc26d2c186d656ef30351cc4a1a",
+      "sha256_stored": null,
+      "truncation_rule": null,
+      "excerpt": null,
+      "manifest_path": "manifests/evidence/openai-models-api/2026-07-01T06-14-52Z.meta.json",
+      "archive_path": "openai-models-api/2026-07-01T06-14-52Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "collector.models-api",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": null
+}

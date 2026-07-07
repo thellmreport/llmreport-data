@@ -1,0 +1,39 @@
+{
+  "sample_spec": {
+    "max_tokens": "LEGACY parameter. set to max_output_tokens if provider specifies it. IF not set to max_input_tokens, if provider specifies it.",
+    "input_cost_per_token": 0.0,
+    "output_cost_per_token": 0.0,
+    "litellm_provider": "one of https://docs.litellm.ai/docs/providers",
+    "mode": "one of: chat, embedding, completion, image_generation, audio_transcription"
+  },
+  "gpt-5.1": {
+    "max_tokens": 128000,
+    "max_input_tokens": 400000,
+    "max_output_tokens": 128000,
+    "input_cost_per_token": 1.25e-06,
+    "output_cost_per_token": 1e-05,
+    "cache_read_input_token_cost": 1.25e-07,
+    "litellm_provider": "openai",
+    "mode": "chat"
+  },
+  "claude-sonnet-4-5-20250929": {
+    "max_tokens": 64000,
+    "max_input_tokens": 1000000,
+    "max_output_tokens": 64000,
+    "input_cost_per_token": 3e-06,
+    "output_cost_per_token": 1.5e-05,
+    "cache_creation_input_token_cost": 3.75e-06,
+    "cache_read_input_token_cost": 3e-07,
+    "litellm_provider": "anthropic",
+    "mode": "chat"
+  },
+  "azure/gpt-5.1": {
+    "max_tokens": 128000,
+    "max_input_tokens": 400000,
+    "max_output_tokens": 128000,
+    "input_cost_per_token": 1.25e-06,
+    "output_cost_per_token": 1e-05,
+    "litellm_provider": "azure",
+    "mode": "chat"
+  }
+}

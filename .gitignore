@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+dist/
+build/tmp/
+# local smoke-run / scratch output (collectors README) — never store data
+var/

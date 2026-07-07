@@ -1,0 +1,10 @@
+{
+  "event_id": "evt_20260701_7d360a82",
+  "kind": "rollback",
+  "created_at": "2026-07-02T06:14:00Z",
+  "related_event_id": null,
+  "related_manifest_paths": [
+    "manifests/evidence/azure-retail-prices-api/2026-07-02T06-10-00Z.meta.json"
+  ],
+  "notes": "Equal-and-opposite reversal within 48h (design.md 1.4 flap damping): meters back to 2.50/1.25. No second event minted; effective status gains rolled_back."
+}

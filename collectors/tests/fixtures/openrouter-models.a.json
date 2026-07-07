@@ -1,0 +1,46 @@
+{
+  "data": [
+    {
+      "id": "anthropic/claude-sonnet-4.5",
+      "name": "Anthropic: Claude Sonnet 4.5",
+      "created": 1758750000,
+      "context_length": 1000000,
+      "architecture": {
+        "modality": "text+image->text",
+        "input_modalities": ["text", "image"],
+        "output_modalities": ["text"],
+        "tokenizer": "Claude"
+      },
+      "pricing": {
+        "prompt": "0.000003",
+        "completion": "0.000015"
+      },
+      "top_provider": {
+        "context_length": 1000000,
+        "max_completion_tokens": 64000
+      },
+      "per_request_limits": null
+    },
+    {
+      "id": "openai/gpt-5.1",
+      "name": "OpenAI: GPT-5.1",
+      "created": 1762800000,
+      "context_length": 400000,
+      "architecture": {
+        "modality": "text+image->text",
+        "input_modalities": ["text", "image"],
+        "output_modalities": ["text"],
+        "tokenizer": "GPT"
+      },
+      "pricing": {
+        "prompt": "0.00000125",
+        "completion": "0.00001"
+      },
+      "top_provider": {
+        "context_length": 400000,
+        "max_completion_tokens": 128000
+      },
+      "per_request_limits": null
+    }
+  ]
+}

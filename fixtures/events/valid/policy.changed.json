@@ -1,0 +1,35 @@
+{
+  "id": "evt_20260705_3d624140",
+  "type": "policy.changed",
+  "provider": "openai",
+  "model_id": null,
+  "observed_at": "2026-07-05T05:30:00Z",
+  "effective_at": null,
+  "summary": "OpenAI usage policies: 'Prohibited activities' section modified in the weekly ToS sweep.",
+  "data": {
+    "document": "openai-usage-policies",
+    "section": "Prohibited activities",
+    "change_kind": "modified"
+  },
+  "evidence": [
+    {
+      "source_id": "openai-usage-policies",
+      "url": "https://openai.com/policies/usage-policies/",
+      "fetched_at": "2026-07-05T05:30:00Z",
+      "sha256_full": "d96c5e22e2717dd7090170ae16ca049b095e55065d4581c2f2d254d95482ae2f",
+      "sha256_stored": null,
+      "truncation_rule": "css:section#prohibited-activities",
+      "excerpt": null,
+      "manifest_path": "manifests/evidence/openai-usage-policies/2026-07-05T05-30-00Z.meta.json",
+      "archive_path": "openai-usage-policies/2026-07-05T05-30-00Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "collector.tou-sweep",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": null
+}

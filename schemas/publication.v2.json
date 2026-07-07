@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thellmreport.com/schemas/publication/v2.json",
+  "title": "Publication record (v2)",
+  "description": "Append-only publish record, publications/<event_id>/<surface>-<ts>.json (design.md 1.2). Surface values are the publish surfaces of the status-by-surface routing table (design.md 1.4).",
+  "type": "object",
+  "required": [
+    "event_id",
+    "surface",
+    "published_at",
+    "url",
+    "renderer_sha"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^evt_[0-9]{8}_[a-f0-9]{8}$"
+    },
+    "surface": {
+      "enum": [
+        "tracker",
+        "changelog",
+        "weekly-email",
+        "x",
+        "bluesky",
+        "pro-alert"
+      ]
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL of the published artifact (page, archive link, or post permalink)"
+    },
+    "renderer_sha": {
+      "type": "string",
+      "description": "Git SHA of the non-LLM templater/renderer that produced the surface output (design.md 5.2)"
+    }
+  },
+  "additionalProperties": false
+}

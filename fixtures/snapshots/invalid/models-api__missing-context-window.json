@@ -1,0 +1,21 @@
+{
+  "models": [
+    {
+      "id": "claude-sonnet-4-5",
+      "created": "2026-07-01T00:00:00Z",
+      "owned_by": null,
+      "endpoints": [
+        "/v1/messages"
+      ]
+    },
+    {
+      "id": "claude-opus-4-1",
+      "created": null,
+      "owned_by": null,
+      "endpoints": [
+        "/v1/messages"
+      ],
+      "context_window": 200000
+    }
+  ]
+}

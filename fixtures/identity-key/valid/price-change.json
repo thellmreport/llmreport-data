@@ -1,0 +1,8 @@
+{
+  "provider": "azure-openai",
+  "canonical_model_id": "gpt-4o",
+  "event_type": "price.changed",
+  "normalized_field_path": "prices[direction=input].value",
+  "old_value": 2.5,
+  "new_value": 2.0
+}

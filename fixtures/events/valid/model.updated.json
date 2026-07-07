@@ -1,0 +1,42 @@
+{
+  "id": "evt_20260701_9281ea78",
+  "type": "model.updated",
+  "provider": "openai",
+  "model_id": "gpt-5.2",
+  "observed_at": "2026-07-01T07:03:11Z",
+  "effective_at": null,
+  "summary": "gpt-5.2 docs page now lists audio input; modalities extended to text+image+audio.",
+  "data": {
+    "context_window": 400000,
+    "modalities": [
+      "text",
+      "image",
+      "audio"
+    ],
+    "endpoints": [
+      "/v1/responses"
+    ],
+    "notes": "Docs model card gained an audio-input row; context window and endpoints unchanged."
+  },
+  "evidence": [
+    {
+      "source_id": "openai-docs-models",
+      "url": "https://platform.openai.com/docs/models/gpt-5.2",
+      "fetched_at": "2026-07-01T07:03:11Z",
+      "sha256_full": "f5efc469cc3ff7e4518af067ef91966d6bb3763053ce988f322eae6c18812719",
+      "sha256_stored": null,
+      "truncation_rule": "css:table.model-capabilities",
+      "excerpt": "Audio input: supported",
+      "manifest_path": "manifests/evidence/openai-docs-models/2026-07-01T07-03-11Z.meta.json",
+      "archive_path": "openai-docs-models/2026-07-01T07-03-11Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "collector.docs-html",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": null
+}

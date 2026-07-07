@@ -1,0 +1,41 @@
+{
+  "id": "evt_20260702_88ce347e",
+  "type": "degradation.resolved",
+  "provider": "anthropic",
+  "model_id": "claude-sonnet-4-5",
+  "observed_at": "2026-07-02T02:05:00Z",
+  "effective_at": null,
+  "summary": "p95 latency for claude-sonnet-4-5 probes from FRA back to 1910ms; degradation window closed.",
+  "data": {
+    "signal": "latency_p95",
+    "baseline": 1850.0,
+    "measured": 1910.0,
+    "window_hours": "6h",
+    "colo": "FRA",
+    "probe_ids": [
+      "probe-messages-basic-01",
+      "probe-messages-basic-02"
+    ]
+  },
+  "evidence": [
+    {
+      "source_id": "probe-anthropic-messages",
+      "url": "https://api.anthropic.com/v1/messages",
+      "fetched_at": "2026-07-02T02:05:00Z",
+      "sha256_full": "9280c787a0e51c742007435517dd45c5c48cb01ba85244c02d884fb747671dc1",
+      "sha256_stored": null,
+      "truncation_rule": null,
+      "excerpt": null,
+      "manifest_path": "manifests/evidence/probe-anthropic-messages/2026-07-02T02-05-00Z.meta.json",
+      "archive_path": "probe-anthropic-messages/2026-07-02T02-05-00Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "collector.probes",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": null
+}

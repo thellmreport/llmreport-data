@@ -1,0 +1,39 @@
+{
+  "id": "evt_20260701_69b4763a",
+  "type": "outage.resolved",
+  "provider": "openai",
+  "model_id": null,
+  "observed_at": "2026-07-01T15:47:30Z",
+  "effective_at": null,
+  "summary": "OpenAI incident 01j9zkx8q2 marked resolved after 2h25m; API error rates back to baseline.",
+  "data": {
+    "incident_id": "01j9zkx8q2",
+    "components": [
+      "API",
+      "Chat Completions"
+    ],
+    "provider_status_url": "https://status.openai.com/incidents/01j9zkx8q2",
+    "severity_reported": "major"
+  },
+  "evidence": [
+    {
+      "source_id": "openai-statuspage",
+      "url": "https://status.openai.com/api/v2/incidents.json",
+      "fetched_at": "2026-07-01T15:47:30Z",
+      "sha256_full": "270892160dbcf51ee9e9760a1abd262615524fa04a5cb02fabf4a183c0db034d",
+      "sha256_stored": null,
+      "truncation_rule": null,
+      "excerpt": null,
+      "manifest_path": "manifests/evidence/openai-statuspage/2026-07-01T15-47-30Z.meta.json",
+      "archive_path": "openai-statuspage/2026-07-01T15-47-30Z.bin",
+      "http_status": 200,
+      "etag": null
+    }
+  ],
+  "producer": {
+    "collector_id": "collector.statuspage",
+    "code_sha": "3f9c2ab7d4e1f8a0b6c5d4e3f2a1b0c9d8e7f6a5",
+    "schema_version": "2.0.0"
+  },
+  "correction_of": null
+}

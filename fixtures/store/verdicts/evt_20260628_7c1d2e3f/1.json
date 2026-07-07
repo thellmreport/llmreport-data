@@ -1,0 +1,12 @@
+{
+  "event_id": "evt_20260628_7c1d2e3f",
+  "verdict": "confirm",
+  "rule": "two-source",
+  "corroborating_evidence": [
+    "manifests/evidence/mistral-docs-mirror/2026-06-28T09-00-00Z.meta.json",
+    "manifests/evidence/mistral-models-api/2026-06-28T10-05-00Z.meta.json"
+  ],
+  "verified_by": "ma-session-4be2d901",
+  "verified_at": "2026-06-28T12:00:00Z",
+  "notes": "provider-docs mirror + official-api: different independence classes; two-source satisfied. (Later corrected by evt_20260703_9a756fcc.)"
+}
