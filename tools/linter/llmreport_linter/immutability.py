@@ -23,6 +23,7 @@ import sys
 #: Prefixes where only additions ('A') are permitted.
 APPEND_ONLY_PREFIXES = (
     "events/",
+    "identity-keys/",
     "verdicts/",
     "publications/",
     "annotations/",

@@ -27,7 +27,24 @@ HOSTS = (
     "raw.githubusercontent.com",
     "status.openai.com",
     "status.claude.com",
+    # Phase 1a no-auth expansion
+    "pricing.us-east-1.amazonaws.com",
+    "prices.azure.com",
+    "health.aws.amazon.com",
+    "azure.status.microsoft",
+    "docs.mistral.ai",
+    "status.mistral.ai",
+    "developers.openai.com",
+    "platform.claude.com",
+    "ai.google.dev",
+    "learn.microsoft.com",
+    "docs.x.ai",
 )
+
+_XML_CT = {"content-type": "text/xml; charset=utf-8"}
+_HTML_CT = {"content-type": "text/html; charset=utf-8"}
+_TEXT_CT = {"content-type": "text/plain; charset=utf-8"}
+_JSON_UTF16_CT = {"content-type": "application/json;charset=utf-16"}
 
 
 def fixture_bytes(name: str) -> bytes:
@@ -156,14 +173,71 @@ def rig(tmp_path, registry):
             url("openai-status-incidents"),
             resp(body=fixture_bytes(_phase_file("statuspage-openai-incidents", phase))),
         )
-        # Anthropic stays quiet in every phase (isolation control group).
+        # Anthropic stays quiet in every phase (isolation control group): the
+        # recorded history.atom feed is served unchanged, so it seeds a baseline
+        # and never diffs. Served as XML — the runner parses it via BODY_PARSERS.
         transport.route(
-            url("anthropic-status-summary"),
-            resp(body=fixture_bytes("statuspage-anthropic-summary.a.json")),
+            url("anthropic-status-history"),
+            resp(
+                body=fixture_bytes("statuspage-anthropic-history.a.xml"),
+                headers={"content-type": "application/atom+xml; charset=utf-8"},
+            ),
+        )
+        # ---- Phase 1a sources: QUIET in every route_set phase (each seeds a
+        # baseline and never diffs). Their b/c fixture phases are exercised by
+        # the dedicated per-collector tests via explicit route overrides, so
+        # the Phase 0 end-to-end assertions stay exact.
+        transport.route(
+            url("aws-bedrock-pricelist-api"),
+            resp(body=fixture_bytes("aws-bedrock-offers.a.json")),
         )
         transport.route(
-            url("anthropic-status-incidents"),
-            resp(body=fixture_bytes("statuspage-anthropic-incidents.a.json")),
+            url("azure-retail-prices-api"),
+            resp(body=fixture_bytes("azure-retail-prices.a.p1.json")),
+        )
+        transport.route(
+            url("azure-retail-prices-api") + "&$skip=1000",
+            resp(body=fixture_bytes("azure-retail-prices.a.p2.json")),
+        )
+        transport.route(
+            url("aws-health-status"),
+            resp(body=fixture_bytes("aws-health.a.json"), headers=_JSON_UTF16_CT),
+        )
+        transport.route(
+            url("azure-status-feed"),
+            resp(body=fixture_bytes("azure-status-feed.a.xml"), headers=_XML_CT),
+        )
+        transport.route(
+            url("mistral-docs-mirror"),
+            resp(body=fixture_bytes("mistral-models-index.a.ts"), headers=_TEXT_CT),
+        )
+        transport.route(
+            url("mistral-models-docs"),
+            resp(body=fixture_bytes("mistral-docs-overview.a.html"), headers=_HTML_CT),
+        )
+        transport.route(
+            url("mistral-status-payload"),
+            resp(body=fixture_bytes("mistral-status-payload.a.json")),
+        )
+        transport.route(
+            url("openai-changelog"),
+            resp(body=fixture_bytes("openai-changelog.a.html"), headers=_HTML_CT),
+        )
+        transport.route(
+            url("anthropic-changelog"),
+            resp(body=fixture_bytes("anthropic-changelog.a.html"), headers=_HTML_CT),
+        )
+        transport.route(
+            url("google-gemini-changelog"),
+            resp(body=fixture_bytes("google-gemini-changelog.a.html"), headers=_HTML_CT),
+        )
+        transport.route(
+            url("azure-openai-whats-new"),
+            resp(body=fixture_bytes("azure-whats-new.a.html"), headers=_HTML_CT),
+        )
+        transport.route(
+            url("xai-changelog"),
+            resp(body=fixture_bytes("xai-models.a.html"), headers=_HTML_CT),
         )
 
     return SimpleNamespace(
@@ -189,6 +263,9 @@ def run(rig):
             clock=rig.clock.time,
             rng=FixedRng(),
             code_sha="test-sha",
+            # Hermetic default: never read HC_PING_URL from the dev machine's
+            # environment inside unit tests (no live network, design rule).
+            heartbeat_ping=lambda status: None,
         )
         kwargs.update(overrides)
         return run_all(rig.repo_root, rig.out_root, **kwargs)

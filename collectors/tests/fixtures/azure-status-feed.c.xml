@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:a10="http://www.w3.org/2005/Atom"
+  version="2.0">
+  <channel xmlns:slash="http://purl.org/rss/1.0/modules/slash/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Azure Status</title>
+    <link>https://azurestatusprodscus2.azurewebsites.net/en-us/status/</link>
+    <description>Azure Status</description>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 22 Jun 2026 15:00:00 Z</lastBuildDate>
+    <item>
+      <title>Azure OpenAI - East US - Increased inference latency</title>
+      <description>Mitigated: between 12:40 and 14:35 UTC customers may have experienced increased latency for Azure OpenAI deployments in East US. The issue is mitigated.</description>
+      <pubDate>Mon, 22 Jun 2026 14:45:00 Z</pubDate>
+      <guid>azure-inc-openai-eastus-0001</guid>
+      <link>https://azure.status.microsoft/en-us/status</link>
+    </item>
+  </channel>
+</rss>

@@ -4,7 +4,7 @@
   "rule": "two-source",
   "corroborating_evidence": [
     "manifests/evidence/anthropic-models-api/2026-07-01T06-12-04Z.meta.json",
-    "manifests/evidence/anthropic-docs-models/2026-07-01T09-20-15Z.meta.json"
+    "manifests/evidence/anthropic-models-docs/2026-07-01T09-20-15Z.meta.json"
   ],
   "verified_by": "ma-session-9f31c2e4",
   "verified_at": "2026-07-01T09:25:41Z",

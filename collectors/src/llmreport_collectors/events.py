@@ -40,6 +40,26 @@ def _summary(text: str) -> str:
     return text if len(text) <= SUMMARY_MAX else text[: SUMMARY_MAX - 1] + "…"
 
 
+def publish_block_note(source) -> str | None:
+    """The registry publish-block caveat for a source, when one is flagged.
+
+    Registry-driven (V-Q3 cond. 5 encoding): a source whose
+    ``entitlement_caveat`` declares publishing BLOCKED gates every event it
+    mints. The collector marks minted events with an append-only annotation
+    (kind 'note') carrying this text; the publisher consults it before any
+    surface routing (Phase 1a pin — the change-event schema is
+    additionalProperties:false, so the mark cannot live on the event file).
+    """
+    caveat = getattr(source, "entitlement_caveat", None)
+    if (
+        isinstance(caveat, str)
+        and "BLOCKED" in caveat.upper()
+        and "publish" in caveat.lower()
+    ):
+        return caveat
+    return None
+
+
 def evidence_item_from_fetch(result, *, ts_fs: str) -> dict:
     """Change-event evidence entry for one fetchkit FetchResult.
 
@@ -245,6 +265,21 @@ def build_outputs(
                 code_sha=code_sha,
             )
         elif delta.event_type == "model.deprecated":
+            # source_kind: api-absence for /v1/models-style listings (rule-(c)
+            # carve-out); 'docs' when a docs-page extraction rule observed the
+            # removal (provider-official docs stance, not entitlement-scoped).
+            source_kind = delta.extras.get("source_kind", "api-absence")
+            if source_kind == "docs":
+                summary = (
+                    f"Model {delta.subject} disappeared from the "
+                    f"{source.source_id} docs model list."
+                )
+            else:
+                summary = (
+                    f"Model {delta.subject} disappeared from {source.source_id} "
+                    "(negative inference; entitlement-scoped — absence is not "
+                    "retirement; requires class-(a) corroboration)."
+                )
             key = {
                 "provider": resolution.provider,
                 "canonical_model_id": resolution.canonical_model_id,
@@ -259,16 +294,12 @@ def build_outputs(
                 provider=resolution.provider,
                 model_id=delta.subject,
                 observed_at=observed_at,
-                summary=(
-                    f"Model {delta.subject} disappeared from {source.source_id} "
-                    "(negative inference; entitlement-scoped — absence is not "
-                    "retirement; requires class-(a) corroboration)."
-                ),
+                summary=summary,
                 data={
                     "eol_date": None,
                     "shutdown_date": None,
                     "replacement_model": None,
-                    "source_kind": "api-absence",
+                    "source_kind": source_kind,
                 },
                 evidence=evidence,
                 collector_id=collector_id,

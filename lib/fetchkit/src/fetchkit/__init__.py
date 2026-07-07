@@ -15,9 +15,11 @@ from .client import (
 )
 from .exceptions import (
     AuthPolicyViolationError,
+    BodyTooLargeError,
     CredentialInURLError,
     ExcludedHostError,
     FetchKitError,
+    PaginationViolationError,
     RegistryViolation,
     RobotsDisallowedError,
     SourceFailedError,

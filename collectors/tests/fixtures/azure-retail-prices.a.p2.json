@@ -1,0 +1,53 @@
+{
+ "BillingCurrency": "USD",
+ "CustomerEntityId": "Default",
+ "CustomerEntityType": "Retail",
+ "Items": [
+  {
+   "currencyCode": "USD",
+   "tierMinimumUnits": 0.0,
+   "retailPrice": 0.01,
+   "unitPrice": 0.01,
+   "armRegionName": "eastus",
+   "location": "US East 2",
+   "effectiveStartDate": "2026-03-01T00:00:00Z",
+   "meterId": "m-gpt4o-out",
+   "meterName": "gpt 4o 1120 Outp glbl Tokens",
+   "productId": "DZH318Z0T9WD",
+   "skuId": "DZH318Z0T9WD/0HNH",
+   "productName": "Azure OpenAI GPT4o",
+   "skuName": "5.4 opt Dz",
+   "serviceName": "Foundry Models",
+   "serviceId": "DZH31600VF1F",
+   "serviceFamily": "AI + Machine Learning",
+   "unitOfMeasure": "1K",
+   "type": "Consumption",
+   "isPrimaryMeterRegion": true,
+   "armSkuName": "54 opt Dz"
+  },
+  {
+   "currencyCode": "USD",
+   "tierMinimumUnits": 0.0,
+   "retailPrice": 0.00125,
+   "unitPrice": 0.00125,
+   "armRegionName": "eastus",
+   "location": "US East 2",
+   "effectiveStartDate": "2026-03-01T00:00:00Z",
+   "meterId": "m-gpt4o-batch-in",
+   "meterName": "gpt 4o 1120 Batch Inp glbl Tokens",
+   "productId": "DZH318Z0T9WD",
+   "skuId": "DZH318Z0T9WD/0HNH",
+   "productName": "Azure OpenAI GPT4o",
+   "skuName": "5.4 opt Dz",
+   "serviceName": "Foundry Models",
+   "serviceId": "DZH31600VF1F",
+   "serviceFamily": "AI + Machine Learning",
+   "unitOfMeasure": "1K",
+   "type": "Consumption",
+   "isPrimaryMeterRegion": true,
+   "armSkuName": "54 opt Dz"
+  }
+ ],
+ "NextPageLink": null,
+ "Count": 2
+}

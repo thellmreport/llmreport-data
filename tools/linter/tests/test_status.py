@@ -1,6 +1,6 @@
 """Effective-status fold semantics (design.md 1.2/1.4)."""
 
-from llmreport_linter.status import derive_state, fold_verdicts, status_at
+from llmreport_linter.status import derive_state, fold_chain, fold_verdicts, status_at
 
 
 def v(verdict, at, seq_note=""):
@@ -81,6 +81,50 @@ def test_mirror_corroborated_stays_unconfirmed():
     state = derive_state(_event(), [], [ann], [], [])
     assert state["status"] == "unconfirmed"
     assert state["mirror_corroborated"] is True
+    assert state["two_source_satisfied"] is False
+
+
+def _ann(kind, at):
+    return {"event_id": "e", "kind": kind, "created_at": at}
+
+
+def test_corroboration_annotation_sets_two_source_flag_not_status():
+    # design.md 1.4.3a: the attach satisfies two-source automatically, but the
+    # status enum still changes only via the verifier's verdict file
+    state = derive_state(_event(), [], [_ann("corroboration", "2026-07-01T08:00:00Z")], [], [])
+    assert state["status"] == "unconfirmed"
+    assert state["two_source_satisfied"] is True
+
+
+def test_flap_annotation_sets_rolled_back_flag():
+    state = derive_state(_event(), [], [_ann("flap", "2026-07-02T06:00:00Z")], [], [])
+    assert state["rolled_back"] is True
+
+
+def test_discrepancy_annotation_opens_hold():
+    # diff-engine conflicting-value observation (design.md 1.4): the hold
+    # opens without any verdict and only a confirm/reject closes it
+    anns = [_ann("discrepancy", "2026-07-01T10:00:00Z")]
+    assert fold_chain([], anns) == ("unconfirmed", True)
+    state = derive_state(_event(), [], anns, [], [])
+    assert state["discrepancy_open"] is True
+
+
+def test_discrepancy_annotation_resolved_by_later_confirm():
+    anns = [_ann("discrepancy", "2026-07-01T10:00:00Z")]
+    verdicts = [v("confirm", "2026-07-02T10:00:00Z")]
+    assert fold_chain(verdicts, anns) == ("confirmed", False)
+    # ... but a confirm BEFORE the annotation does not resolve it
+    early = [v("confirm", "2026-07-01T09:00:00Z")]
+    assert fold_chain(early, anns) == ("confirmed", True)
+
+
+def test_status_at_considers_annotations():
+    anns = [_ann("discrepancy", "2026-07-01T10:00:00Z")]
+    verdicts = [v("confirm", "2026-07-02T10:00:00Z")]
+    assert status_at(verdicts, "2026-07-01T09:00:00Z", anns) == ("unconfirmed", False)
+    assert status_at(verdicts, "2026-07-01T12:00:00Z", anns) == ("unconfirmed", True)
+    assert status_at(verdicts, "2026-07-02T12:00:00Z", anns) == ("confirmed", False)
 
 
 def test_publication_counts():

@@ -5,7 +5,7 @@ Four collectors, all network I/O through ``fetchkit.FetchClient`` ONLY:
 - ``openrouter_models``  — openrouter.ai/api/v1/models        -> models-api snapshot
 - ``litellm_prices``     — LiteLLM model_prices JSON           -> pricing-api snapshot
 - ``status_openai``      — status.openai.com summary+incidents -> statuspage snapshots
-- ``status_anthropic``   — status.claude.com summary+incidents -> statuspage snapshots
+- ``status_anthropic``   — status.claude.com history.atom feed  -> statuspage snapshots
 
 Pipeline per source: fetch (evidence sidecar written by fetchkit) -> normalize
 to the canonical snapshot (schemas/snapshots/*.v2.json) -> diff vs the prior

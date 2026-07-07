@@ -24,7 +24,8 @@
         "aws-bedrock": [
           "anthropic.claude-sonnet-4-5-20250929-v1:0",
           "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
-          "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+          "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "anthropic/claude-sonnet-4-5"
         ],
         "google-vertex": ["claude-sonnet-4-5@20250929"],
         "openrouter": ["anthropic/claude-sonnet-4.5"],
@@ -63,7 +64,7 @@
       "display_name": "GPT-4o",
       "aliases": {
         "openai": ["gpt-4o", "gpt-4o-2024-08-06", "gpt-4o-2024-11-20"],
-        "azure-openai": ["gpt-4o"],
+        "azure-openai": ["gpt-4o", "gpt-4o-1120-global", "gpt-4o-1120-datazone", "gpt-4o-1120-regional"],
         "openrouter": ["openai/gpt-4o"],
         "litellm": ["gpt-4o", "azure/gpt-4o"]
       },
@@ -90,6 +91,50 @@
         "litellm": ["gemini/gemini-3-pro-preview"]
       },
       "headline": true
+    },
+    {
+      "canonical_id": "claude-3-sonnet",
+      "display_name": "Claude 3 Sonnet",
+      "aliases": {
+        "anthropic": ["claude-3-sonnet-20240229"],
+        "aws-bedrock": [
+          "anthropic.claude-3-sonnet-20240229-v1:0",
+          "anthropic/claude-3-sonnet"
+        ]
+      },
+      "headline": false
+    },
+    {
+      "canonical_id": "mistral-medium-3-5",
+      "display_name": "Mistral Medium 3.5",
+      "aliases": {
+        "mistral": ["mistral-medium-3-5-26-04", "mistral-medium-latest"]
+      },
+      "headline": true
+    },
+    {
+      "canonical_id": "mistral-large-3",
+      "display_name": "Mistral Large 3",
+      "aliases": {
+        "mistral": ["mistral-large-3-25-12", "mistral-large-latest"]
+      },
+      "headline": true
+    },
+    {
+      "canonical_id": "grok-4-3",
+      "display_name": "Grok 4.3",
+      "aliases": {
+        "xai": ["grok-4.3", "grok-4.3-latest"]
+      },
+      "headline": true
+    },
+    {
+      "canonical_id": "grok-build-0-1",
+      "display_name": "Grok Build 0.1",
+      "aliases": {
+        "xai": ["grok-build-0.1"]
+      },
+      "headline": false
     }
   ]
 }

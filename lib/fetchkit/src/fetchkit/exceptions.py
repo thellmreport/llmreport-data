@@ -55,6 +55,42 @@ class UserAgentViolationError(RegistryViolation):
     """Attempt to override the single identified User-Agent (design.md §1.3)."""
 
 
+class PaginationViolationError(RegistryViolation):
+    """A pagination continuation URL left the registered endpoint.
+
+    Server-directed pagination (e.g. the Azure Retail Prices ``NextPageLink``)
+    may only continue on the SAME scheme + host + path as the registered URL —
+    only the query string may differ. Anything else is treated like an
+    uncleared redirect: refuse before any network I/O (design.md §1.3).
+    """
+
+
+class BodyTooLargeError(FetchKitError):
+    """Response body exceeded the caller's ``max_body_bytes`` size guard.
+
+    Raised after the transport read (defense against unbounded growth of
+    large registered files, e.g. the AWS Price List bulk index). Never
+    retried — a too-large body is not transient.
+    """
+
+    def __init__(self, source_id: str, *, size: int, limit: int) -> None:
+        self.source_id = source_id
+        self.size = size
+        self.limit = limit
+        self.alert: dict[str, Any] = {
+            "type": "source.failed",
+            "source_id": source_id,
+            "failover": None,
+            "consecutive_failures": 1,
+            "last_http_status": None,
+            "reason": f"body-too-large:{size}>{limit}",
+        }
+        super().__init__(
+            f"source '{source_id}' response body ({size} bytes) exceeds the "
+            f"size guard of {limit} bytes — refusing to process"
+        )
+
+
 class AuthPolicyViolationError(RegistryViolation):
     """Auth headers supplied for a source marked ``never_authenticate``."""
 

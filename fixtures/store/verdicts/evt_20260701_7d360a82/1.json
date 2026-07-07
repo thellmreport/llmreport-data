@@ -3,7 +3,7 @@
   "verdict": "discrepancy",
   "rule": null,
   "corroborating_evidence": [
-    "manifests/evidence/azure-docs-pricing/2026-07-01T07-40-00Z.meta.json"
+    "manifests/evidence/azure-openai-whats-new/2026-07-01T07-40-00Z.meta.json"
   ],
   "verified_by": "ma-session-9f31c2e4",
   "verified_at": "2026-07-01T09:31:02Z",

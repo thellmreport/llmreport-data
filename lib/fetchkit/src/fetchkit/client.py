@@ -19,9 +19,11 @@ from .cache import ConditionalGetCache
 from .evidence import build_meta, sha256_hex, write_bytes, write_json
 from .exceptions import (
     AuthPolicyViolationError,
+    BodyTooLargeError,
     CredentialInURLError,
     ExcludedHostError,
     FetchKitError,
+    PaginationViolationError,
     SourceFailedError,
     SourceRevokedError,
     UnclearedRedirectError,
@@ -145,16 +147,31 @@ class FetchClient:
         evidence_path: str | Path | None = None,
         meta_path: str | Path | None = None,
         truncation_rule: TruncationRule | None = None,
+        page_url: str | None = None,
+        max_body_bytes: int | None = None,
     ) -> FetchResult:
         """Fetch a registered source by id. The URL comes from the registry.
+
+        ``page_url`` is the ONLY sanctioned deviation from the registered URL:
+        a server-directed pagination continuation (e.g. Azure Retail Prices
+        ``NextPageLink``) that must stay on the registered scheme + host +
+        path — only the query string may differ (enforced pre-I/O, raising
+        ``PaginationViolationError``). Page fetches skip the conditional-GET
+        validator cache both ways so page-N validators can never poison the
+        registered URL's cache entry.
+
+        ``max_body_bytes`` is a size guard for large registered files: a 2xx
+        body larger than the limit raises ``BodyTooLargeError`` (never
+        retried) instead of being processed.
 
         Raises (all before any network I/O): ``UnregisteredSourceError``,
         ``ExcludedHostError``, ``CredentialInURLError``,
         ``UserAgentViolationError``, ``AuthPolicyViolationError``,
-        ``RobotsDisallowedError``. Raises after responses:
-        ``SourceRevokedError`` (403/429/bot-challenge — revocation signal,
-        carries the registry failover source_id) and ``SourceFailedError``
-        (alert-and-failover after the bounded backoff schedule).
+        ``PaginationViolationError``, ``RobotsDisallowedError``. Raises after
+        responses: ``SourceRevokedError`` (403/429/bot-challenge — revocation
+        signal, carries the registry failover source_id),
+        ``BodyTooLargeError`` and ``SourceFailedError`` (alert-and-failover
+        after the bounded backoff schedule).
         """
         source = self._registry.get(source_id)
         self._refuse_excluded(source)
@@ -162,7 +179,11 @@ class FetchClient:
             raise FetchKitError(
                 f"source '{source_id}' has no fetch method registered"
             )
-        violation = url_credential_violation(source.url)
+        request_url = source.url
+        if page_url is not None:
+            self._guard_page_url(source, page_url)
+            request_url = page_url
+        violation = url_credential_violation(request_url)
         if violation:
             raise CredentialInURLError(
                 f"refusing to send request for '{source_id}': {violation} — "
@@ -173,18 +194,35 @@ class FetchClient:
         ttl_s = recheck_ttl_seconds(
             source.robots_recheck or self._registry.robots_recheck_default
         )
-        self._robots.check(source.url, ttl_s=ttl_s)
+        self._robots.check(request_url, ttl_s=ttl_s)
         self._respect_crawl_delay(source)
-        conditional_sent = self._apply_conditional_headers(source_id, headers)
+        conditional_sent = False
+        if page_url is None:
+            conditional_sent = self._apply_conditional_headers(source_id, headers)
         return self._request_with_backoff(
             source,
+            request_url,
             headers,
             request_body,
             conditional_sent,
             evidence_path,
             meta_path,
             truncation_rule,
+            store_validators=page_url is None,
+            max_body_bytes=max_body_bytes,
         )
+
+    def _guard_page_url(self, source: Source, page_url: str) -> None:
+        """Pagination may only continue on the registered endpoint."""
+        want = urlsplit(canonicalize_url(source.url))
+        got = urlsplit(canonicalize_url(page_url))
+        if (got.scheme, got.netloc, got.path) != (want.scheme, want.netloc, want.path):
+            raise PaginationViolationError(
+                f"pagination for '{source.source_id}' resolved to "
+                f"'{page_url}' which leaves the registered endpoint "
+                f"{want.scheme}://{want.netloc}{want.path} — only the query "
+                "string may differ (design.md §1.3 allowlist)"
+            )
 
     # ------------------------------------------------------------------
     # refusal gates (never send)
@@ -269,12 +307,16 @@ class FetchClient:
     def _request_with_backoff(
         self,
         source: Source,
+        request_url: str,
         headers: dict[str, str],
         request_body: bytes | None,
         conditional_sent: bool,
         evidence_path: str | Path | None,
         meta_path: str | Path | None,
         truncation_rule: TruncationRule | None,
+        *,
+        store_validators: bool = True,
+        max_body_bytes: int | None = None,
     ) -> FetchResult:
         attempts = 0
         while True:
@@ -283,7 +325,7 @@ class FetchClient:
             try:
                 response = self._transport.request(
                     source.method or "GET",
-                    source.url,
+                    request_url,
                     headers,
                     body=request_body,
                 )
@@ -328,7 +370,7 @@ class FetchClient:
             if response.status == 304:
                 return FetchResult(
                     source_id=source.source_id,
-                    url=canonicalize_url(response.url or source.url),
+                    url=canonicalize_url(response.url or request_url),
                     http_status=304,
                     fetched_at=ts,
                     conditional_result="not-modified",
@@ -336,14 +378,24 @@ class FetchClient:
                     response_headers=redact_response_headers(response.headers),
                 )
             if 200 <= response.status < 300:
+                if max_body_bytes is not None and len(response.body) > max_body_bytes:
+                    # Size guard: never retried — a too-large body is not
+                    # transient, it is a source that outgrew its budget.
+                    raise BodyTooLargeError(
+                        source.source_id,
+                        size=len(response.body),
+                        limit=max_body_bytes,
+                    )
                 return self._build_success(
                     source,
+                    request_url,
                     response,
                     conditional,
                     ts,
                     evidence_path,
                     meta_path,
                     truncation_rule,
+                    store_validators=store_validators,
                 )
             if response.status in TRANSIENT_STATUSES:
                 if attempts >= self._max_attempts:
@@ -372,21 +424,25 @@ class FetchClient:
     def _build_success(
         self,
         source: Source,
+        request_url: str,
         response: TransportResponse,
         conditional: str,
         fetched_at: str,
         evidence_path: str | Path | None,
         meta_path: str | Path | None,
         truncation_rule: TruncationRule | None,
+        *,
+        store_validators: bool = True,
     ) -> FetchResult:
-        final_url = response.url or source.url
+        final_url = response.url or request_url
         self._guard_redirects(source, response, final_url)
 
-        self._cache.store(
-            source.source_id,
-            etag=response.headers.get("etag"),
-            last_modified=response.headers.get("last-modified"),
-        )
+        if store_validators:
+            self._cache.store(
+                source.source_id,
+                etag=response.headers.get("etag"),
+                last_modified=response.headers.get("last-modified"),
+            )
 
         body = response.body
         sha_full = sha256_hex(body)

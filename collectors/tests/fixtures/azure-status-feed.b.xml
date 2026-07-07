@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:a10="http://www.w3.org/2005/Atom"
+  version="2.0">
+  <channel xmlns:slash="http://purl.org/rss/1.0/modules/slash/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Azure Status</title>
+    <link>https://azurestatusprodscus2.azurewebsites.net/en-us/status/</link>
+    <description>Azure Status</description>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 22 Jun 2026 13:30:00 Z</lastBuildDate>
+    <item>
+      <title>Azure OpenAI - East US - Increased inference latency</title>
+      <description>Starting at 12:40 UTC we are investigating reports of increased latency for Azure OpenAI deployments in East US.</description>
+      <pubDate>Mon, 22 Jun 2026 13:05:00 Z</pubDate>
+      <guid>azure-inc-openai-eastus-0001</guid>
+      <link>https://azure.status.microsoft/en-us/status</link>
+    </item>
+    <item>
+      <title>Azure Storage - West Europe - Elevated error rates</title>
+      <description>Storage requests in West Europe are seeing elevated error rates. Mitigation is under way.</description>
+      <pubDate>Mon, 22 Jun 2026 12:50:00 Z</pubDate>
+      <guid>azure-inc-storage-weu-0002</guid>
+      <link>https://azure.status.microsoft/en-us/status</link>
+    </item>
+  </channel>
+</rss>

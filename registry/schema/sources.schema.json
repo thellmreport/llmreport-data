@@ -73,6 +73,25 @@
           "items": { "type": "string" },
           "minItems": 1
         },
+        "watch_sources": {
+          "description": "Registry source_ids the weekly sentinel job (tools/watch/llmreport_watch/sentinel.py) fetches to evaluate this sentinel — the machine-usable companion of the prose 'watch' list.",
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "minItems": 1
+        },
+        "reference": {
+          "description": "Committed reference state the sentinel diffs against (e.g. the AWS carve-out sentence + hash). Seeded by the sentinel job on first run, then human-verified and committed; a mismatch on a later run is the trigger.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["recorded", "normalization"],
+          "properties": {
+            "quote": { "type": "string", "minLength": 1 },
+            "quote_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "aup_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "recorded": { "type": "string", "format": "date" },
+            "normalization": { "const": "text-v1" }
+          }
+        },
         "fetch_via": { "type": "string" },
         "trigger": { "type": "string" },
         "action": { "type": "string" },
@@ -106,6 +125,10 @@
           "pattern": "^https://"
         },
         "method": { "enum": ["GET", "POST", null] },
+        "format": {
+          "enum": ["json", "atom", "rss", "html", "text"],
+          "description": "Wire format of the fetched payload (optional; drives the collector's body parser — e.g. atom feeds are parsed as XML, not JSON; 'text' covers plain-text/source files such as the Mistral mirror's models index.ts). Defaults to json when absent."
+        },
         "auth": {
           "type": "string",
           "pattern": "^(none|sigv4|header:[A-Za-z0-9-]+)$"

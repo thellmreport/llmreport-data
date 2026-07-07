@@ -8,21 +8,23 @@ alike can audit every claim back to hashed source bytes.
 
 Authoritative spec: `design.md` in the parent project (§1.2 store, §1.4
 verification, §1.5 evidence/redaction, §1.7 write discipline). Current build
-state: see `PHASE0-STATUS.md`.
+state: see `STATUS.md`.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
-| `schemas/` | JSON Schema 2020-12 for every record type: change-event envelope + 13 per-type `data/` schemas, verdicts, publications, annotations, identity-key, 4 `snapshots/` schemas |
+| `schemas/` | JSON Schema 2020-12 for every record type: change-event envelope + 13 per-type `data/` schemas (plus the shared `price-structure` def), verdicts, publications, annotations, identity-key, 4 `snapshots/` schemas |
 | `tables/` | `materiality.json` (what counts as a material delta) and `severity.json` (sev1–3 dispatch) |
-| `registry/` | `sources.json` — the fetch allowlist: 53 source records with class/lineage, cadence, robots/attribution conditions, exclusions and compliance sentinels; `model-aliases.json`; the registry's own schema |
-| `lib/fetchkit/` | The only code allowed to touch the network. Registry-enforced allowlist, robots gate, credential send-refusal (§1.5), conditional GET, evidence bytes + manifests, JSONL request audit |
-| `collectors/` | Phase 0 collectors (OpenRouter models, LiteLLM prices, OpenAI + Anthropic status) — normalize → snapshot → materiality diff → deterministic event minting |
-| `tools/linter/` | Store linter: schema validation, id minting rules, verdict-chain status fold, publish legality, cross-file integrity; emits `derived/state.json` |
+| `registry/` | `sources.json` — the fetch allowlist: 54 source records with class/lineage, cadence, robots/attribution conditions, exclusions and compliance sentinels; `model-aliases.json`; the registry's own schema |
+| `lib/fetchkit/` | The only code allowed to touch the network. Registry-enforced allowlist, robots gate, credential send-refusal (§1.5), conditional GET, pagination + body-size guards, evidence bytes + manifests, JSONL request audit |
+| `collectors/` | 11 no-auth collectors (Phase 0: OpenRouter models, LiteLLM prices, OpenAI + Anthropic status; Phase 1a: AWS Bedrock + Azure pricing, AWS Health + Azure + Mistral status, Mistral models, generic docs changelogs) — normalize → snapshot → materiality diff → deterministic event minting → corroboration engine |
+| `tools/linter/` | Store linter: schema validation, id minting rules, identity-key sidecar + independence/corroboration checks, verdict-chain status fold, publish legality, cross-file integrity; emits `derived/state.json` |
 | `tools/guards/` | Redaction gate (§1.5) and PII guard — required CI checks |
+| `tools/watch/` | Scheduled watch jobs (`llmreport_watch`): weekly robots.txt re-check, registry-driven compliance sentinels, healthchecks.io dead-man heartbeat (wired into the collector runner) |
 | `fixtures/` | Valid/invalid fixtures per schema + `fixtures/store/` mini-store exercising every §1.4 verification path |
-| `.github/workflows/` | `ci.yml` (active); `collect.yml`, `robots-recheck.yml`, `sentinel.yml` (gated templates until repo + bot credentials exist) |
+| `queue/` | Exceptions-queue drop directory (`queue/<emitter>/<run-ts>.jsonl`); CI turns each line into a GitHub issue. Only `README.md` is tracked |
+| `.github/workflows/` | `ci.yml` (active); `robots-recheck.yml` + `sentinel.yml` invoke the real `llmreport_watch` modules (gated by `SENTINELS_ENABLED`); `collect.yml` gated until repo + bot credentials exist |
 | `derived/` | Linter-computed event state (never hand-edited) |
 
 Events are immutable once merged; verdicts/publications/annotations are

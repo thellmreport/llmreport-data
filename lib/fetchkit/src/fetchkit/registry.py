@@ -35,6 +35,10 @@ class Source:
     excluded: bool
     exclusion_reason: str | None
     conditions: Mapping[str, Any] = field(default_factory=dict)
+    #: design.md 1.4.3c: per-provider caveat that a models list is
+    #: account/tier/region-scoped — absence is not retirement (rule-(c)
+    #: disappearance carve-out); consumed by the collectors' diff engine.
+    entitlement_caveat: str | None = None
 
     @property
     def host(self) -> str:
@@ -77,6 +81,7 @@ class Registry:
                 excluded=bool(record.get("excluded", False)),
                 exclusion_reason=record.get("exclusion_reason"),
                 conditions=record.get("conditions") or {},
+                entitlement_caveat=record.get("entitlement_caveat"),
             )
             if source.source_id in self._sources:
                 raise ValueError(f"duplicate source_id in registry: {source.source_id}")

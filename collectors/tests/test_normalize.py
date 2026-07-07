@@ -9,11 +9,13 @@ from llmreport_linter import schemas as sch
 from llmreport_collectors.normalize import (
     normalize_litellm_prices,
     normalize_openrouter_models,
+    normalize_statuspage_atom,
     normalize_statuspage_incidents,
     normalize_statuspage_summary,
+    parse_atom_body,
 )
 
-from collector_rig import REPO_ROOT, fixture_json
+from collector_rig import REPO_ROOT, fixture_bytes, fixture_json
 
 
 @pytest.fixture(scope="module")
@@ -63,3 +65,24 @@ def test_statuspage_snapshots_valid(schema_set):
         assert incident["components"] == ["API", "Chat Completions"]
         assert sidecar["incidents"]["inc-new-api-errors"]["impact"] == "major"
         assert sidecar["page_url"] == "https://status.openai.com"
+
+
+def test_statuspage_atom_snapshot_valid(schema_set):
+    root = parse_atom_body(fixture_bytes("statuspage-anthropic-history.a.xml"))
+    snapshot, sidecar = normalize_statuspage_atom(root)
+    # the Atom feed produces the SAME canonical statuspage snapshot shape
+    assert schema_set.errors(sch.SNAPSHOT_SCHEMAS["statuspage"], snapshot) == []
+    ids = [i["id"] for i in snapshot["incidents"]]
+    assert ids == sorted(ids) and len(ids) == 25
+    # id is the numeric Incident id from the entry <id> tag URI; status is the
+    # latest lifecycle label parsed from the entry content; components thin out
+    inc = next(i for i in snapshot["incidents"] if i["id"] == "30814169")
+    assert inc["status"] == "resolved"
+    assert inc["components"] == []
+    assert inc["updated_at"] == "2026-07-07T07:37:01Z"
+    side = sidecar["incidents"]["30814169"]
+    assert side["impact"] is None  # history feed carries no impact field
+    assert side["name"] == "Elevated errors on Claude Sonnet 5"
+    assert side["shortlink"] == "https://status.claude.com/incidents/hh9hj15mxkrx"
+    assert sidecar["page_url"] == "https://status.claude.com"
+    assert sidecar["rule_id"] == "statuspage-atom-v1"

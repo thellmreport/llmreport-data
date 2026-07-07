@@ -1,0 +1,37 @@
+[
+ {
+  "data": 1,
+  "prerenderedAt": -1
+ },
+ [
+  "ShallowReactive",
+  2
+ ],
+ {
+  "unresolved-incidents-fixture": 3
+ },
+ {
+  "incidents": 4
+ },
+ [
+  5
+ ],
+ {
+  "id": 6,
+  "name": 7,
+  "status": 8,
+  "updatedAt": 9,
+  "services": 10
+ },
+ "inc-mistral-0001",
+ "Elevated error rates on Chat Completions",
+ "RESOLVED",
+ "2026-06-22T15:00:00.000Z",
+ [
+  11
+ ],
+ {
+  "name": 12
+ },
+ "Chat Completions API"
+]

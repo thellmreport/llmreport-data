@@ -1,0 +1,10 @@
+{
+  "event_id": "evt_20260701_52940eaf",
+  "kind": "corroboration",
+  "created_at": "2026-07-01T09:20:15Z",
+  "related_event_id": null,
+  "related_manifest_paths": [
+    "manifests/evidence/anthropic-models-docs/2026-07-01T09-20-15Z.meta.json"
+  ],
+  "notes": "Independent second source inside the 72h window (design.md 1.4a): provider-docs vs official-api — different class and lineage; two-source satisfied."
+}

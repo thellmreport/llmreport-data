@@ -16,13 +16,14 @@
     },
     "kind": {
       "enum": [
+        "corroboration",
         "rollback",
         "flap",
         "discrepancy",
         "mirror-corroborated",
         "note"
       ],
-      "description": "rollback: equal-and-opposite reversal inside the damping window — the event's effective status gains a rolled_back flag; discrepancy: link to a conflicting-value exception item; mirror-corroborated: only same-lineage mirrors corroborate (stays unconfirmed)"
+      "description": "corroboration: an INDEPENDENT second source (different class and lineage, design.md 1.4.3a) attached inside the 72h window — satisfies two-source; rollback: equal-and-opposite reversal inside the damping window — the event's effective status gains a rolled_back flag; flap: further oscillation of an already-rolled-back candidate (hysteresis — surfaced once, never re-minted); discrepancy: link to a conflicting-value exception item (nothing publishes until resolved); mirror-corroborated: only same-lineage mirrors corroborate (stays unconfirmed)"
     },
     "created_at": {
       "type": "string",

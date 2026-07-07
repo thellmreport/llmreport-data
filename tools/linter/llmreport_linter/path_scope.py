@@ -39,8 +39,20 @@ def _bot_identities(name: str) -> tuple[str, ...]:
 #: ordinary reviewed PRs (branch protection still applies).
 WRITER_SCOPES: dict[str, dict[str, tuple[str, ...]]] = {
     "collector-bot": {
+        # annotations/: the diff engine appends corroboration / rollback /
+        # flap / discrepancy annotations (design.md 1.4 attach window + flap
+        # damping); identity-keys/: key sidecars written at mint time;
+        # exceptions/: discrepancy + unclassified queue items.
         "identities": _bot_identities("collector-bot"),
-        "allow": ("events/", "snapshots/", "manifests/", "derived/"),
+        "allow": (
+            "events/",
+            "identity-keys/",
+            "annotations/",
+            "exceptions/",
+            "snapshots/",
+            "manifests/",
+            "derived/",
+        ),
     },
     "worker-bot": {  # Cloudflare Worker probe rollups via ingest/probes (1.7)
         "identities": _bot_identities("worker-bot"),

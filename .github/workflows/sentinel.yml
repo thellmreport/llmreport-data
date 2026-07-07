@@ -1,22 +1,32 @@
 # Weekly compliance sentinels (registry/sources.json "sentinels", weekly
-# cadence). Two jobs:
+# cadence). Module: tools/watch/llmreport_watch/sentinel.py. Two jobs:
 #
 #   aws-carveout        - the AWS Site Terms CC BY-SA 4.0 documentation
 #                         carve-out sentence + the AWS AUP (sentinel
 #                         "aws-carveout"; sweep dissents B1/B2/B3). Fetched
-#                         wayback-default - direct fetch only on counsel
-#                         sign-off. If the carve-out sentence is removed or
-#                         modified, or the AUP changes, the clearance verdict
-#                         LAPSES TO EXCLUDE: docs.aws.amazon.com sources flip
-#                         excluded=true and collectors auto-switch to
-#                         ListFoundationModels lifecycle + Price List diffs.
+#                         via the registered web.archive.org replay sources
+#                         (wayback-default - direct fetch only on counsel
+#                         sign-off; aws.amazon.com is host-excluded and
+#                         fetchkit refuses it pre-I/O). If the carve-out
+#                         sentence is removed or modified, or the AUP hash
+#                         changes, the clearance verdict LAPSES TO EXCLUDE:
+#                         the module emits a CRITICAL queue item plus a
+#                         prepared registry file flipping docs.aws.amazon.com
+#                         sources to excluded=true (human/oversight turns it
+#                         into the PR; nothing auto-merges). First run seeds
+#                         the reference quote + hashes into the registry
+#                         record - verify and commit via a reviewed PR.
 #
 #   weekly-sentinels    - every other registry sentinel with cadence weekly
-#                         (currently mistral-legal-hub-watch). Every-cycle and
-#                         every-fetch sentinels run inside the hourly
-#                         collectors, not here.
+#                         (currently mistral-legal-hub-watch). Global
+#                         sentinels (fetch_defaults.global_sentinels) are
+#                         enforced in fetchkit / the robots-recheck sweep;
+#                         every-cycle and every-fetch sentinels run inside
+#                         the hourly collectors, not here.
 #
-# Every trigger opens an exceptions-queue item; nothing auto-adapts silently.
+# Exit codes: 0 clean; 2 queue items emitted -> the step FAILS LOUDLY and the
+# follow-up step opens one GitHub issue per queue line. Every trigger opens
+# an exceptions-queue item; nothing auto-adapts silently.
 name: sentinels (weekly)
 
 on:
@@ -35,8 +45,8 @@ env:
 jobs:
   aws-carveout:
     name: AWS carve-out + AUP sentinel
-    # Gated until the sentinels module lands (Phase 1); if enabled early, the
-    # TODO step fails loudly rather than pretending the check ran.
+    # Gated by the SENTINELS_ENABLED repo variable (activation pattern,
+    # STATUS.md); manual dispatch always runs for verification.
     if: ${{ vars.SENTINELS_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-24.04
     steps:
@@ -54,27 +64,47 @@ jobs:
       - name: Sync environment (locked)
         run: uv sync --frozen
 
-      # TODO(activation): sentinels module (Phase 1). Contract for aws-carveout:
-      #   - resolve watch list from registry sentinel record "aws-carveout"
-      #     (aws.amazon.com/terms + aws.amazon.com/aup),
-      #   - fetch via Wayback by default (fetch_via: wayback-default; direct
-      #     only on counsel sign-off, sweep dissent B2),
-      #   - locate the CC BY-SA 4.0 documentation carve-out sentence and hash
-      #     it; diff the AUP against the last cleared hash,
-      #   - trigger => nonzero exit + report for the exceptions queue AND a
-      #     prepared PR flipping excluded=true on all docs.aws.amazon.com
-      #     sources (human/oversight merges it; nothing auto-merges).
       - name: Check AWS Site Terms carve-out sentence + AUP
-        run: |
-          echo "TODO(activation): uv run python -m sentinels.run --registry registry/sources.json --sentinel aws-carveout --out ${{ runner.temp }}/aws-carveout.json"
-          exit 1
+        run: >
+          uv run python -m llmreport_watch.sentinel
+          --repo-root . --sentinel aws-carveout
+          --out ${{ runner.temp }}/sentinel-aws
 
-      - name: Open exceptions-queue item on trigger
+      - name: Upload sentinel output (report, evidence, prepared PR, queue)
+        if: always()
+        uses: actions/upload-artifact@v4.6.0 # pinned
+        with:
+          name: sentinel-aws-carveout-${{ github.run_id }}
+          if-no-files-found: ignore
+          path: |
+            ${{ runner.temp }}/sentinel-aws
+            registry/sources.json
+            queue/
+
+      - name: Open exceptions-queue issues on trigger
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "TODO(activation): gh issue create --label exceptions-queue,sentinel,aws --title 'AWS carve-out/AUP sentinel triggered - verdict lapses to EXCLUDE' --body-file ${{ runner.temp }}/aws-carveout.json"
+          set -euo pipefail
+          shopt -s nullglob
+          for file in queue/sentinel/*.jsonl; do
+            while IFS= read -r line; do
+              [ -z "$line" ] && continue
+              title=$(jq -r '.title' <<<"$line")
+              {
+                echo "severity: $(jq -r '.severity' <<<"$line")"
+                echo "kind: $(jq -r '.kind' <<<"$line")"
+                echo "action required: $(jq -r '.action_required' <<<"$line")"
+                echo
+                echo '```json'
+                jq . <<<"$line"
+                echo '```'
+              } > "$RUNNER_TEMP/issue-body.md"
+              gh issue create --label exceptions-queue,sentinel,aws \
+                --title "$title" --body-file "$RUNNER_TEMP/issue-body.md"
+            done < "$file"
+          done
 
   weekly-sentinels:
     name: other weekly-cadence sentinels
@@ -95,19 +125,49 @@ jobs:
       - name: Sync environment (locked)
         run: uv sync --frozen
 
-      # TODO(activation): runs every registry sentinel whose cadence is
-      # "weekly" except aws-carveout (dedicated job above). Currently:
-      #   - mistral-legal-hub-watch: new policy document appearing on
-      #     legal.mistral.ai (can appear without a robots.txt change) =>
-      #     exceptions-queue item + route to ToU clearance (sweep 2.3).
+      # Runs every registry sentinel whose cadence is "weekly" except
+      # aws-carveout (dedicated job above) and the global sentinels.
+      # Currently: mistral-legal-hub-watch - new policy document appearing
+      # on legal.mistral.ai (can appear without a robots.txt change) =>
+      # exceptions-queue item + route to ToU clearance (sweep 2.3).
       - name: Run weekly sentinels
-        run: |
-          echo "TODO(activation): uv run python -m sentinels.run --registry registry/sources.json --cadence weekly --exclude aws-carveout --out ${{ runner.temp }}/weekly-sentinels.json"
-          exit 1
+        run: >
+          uv run python -m llmreport_watch.sentinel
+          --repo-root . --cadence weekly --exclude aws-carveout
+          --out ${{ runner.temp }}/weekly-sentinels
 
-      - name: Open exceptions-queue item on trigger
+      - name: Upload sentinel output (report, state, queue)
+        if: always()
+        uses: actions/upload-artifact@v4.6.0 # pinned
+        with:
+          name: sentinel-weekly-${{ github.run_id }}
+          if-no-files-found: ignore
+          path: |
+            ${{ runner.temp }}/weekly-sentinels
+            registry/sentinel-state/
+            queue/
+
+      - name: Open exceptions-queue issues on trigger
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "TODO(activation): gh issue create --label exceptions-queue,sentinel --title 'weekly sentinel triggered' --body-file ${{ runner.temp }}/weekly-sentinels.json"
+          set -euo pipefail
+          shopt -s nullglob
+          for file in queue/sentinel/*.jsonl; do
+            while IFS= read -r line; do
+              [ -z "$line" ] && continue
+              title=$(jq -r '.title' <<<"$line")
+              {
+                echo "severity: $(jq -r '.severity' <<<"$line")"
+                echo "kind: $(jq -r '.kind' <<<"$line")"
+                echo "action required: $(jq -r '.action_required' <<<"$line")"
+                echo
+                echo '```json'
+                jq . <<<"$line"
+                echo '```'
+              } > "$RUNNER_TEMP/issue-body.md"
+              gh issue create --label exceptions-queue,sentinel \
+                --title "$title" --body-file "$RUNNER_TEMP/issue-body.md"
+            done < "$file"
+          done

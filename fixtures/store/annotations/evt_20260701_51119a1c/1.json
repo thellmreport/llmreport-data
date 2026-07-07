@@ -5,7 +5,7 @@
   "related_event_id": null,
   "related_manifest_paths": [
     "manifests/evidence/openrouter-models/2026-07-01T07-02-11Z.meta.json",
-    "manifests/evidence/litellm-model-map/2026-07-01T07-30-00Z.meta.json"
+    "manifests/evidence/litellm-model-prices/2026-07-01T07-30-00Z.meta.json"
   ],
   "notes": "Only OpenRouter + LiteLLM corroborate - shared provider-docs lineage cannot two-source (design.md 1.4a). Stays unconfirmed."
 }

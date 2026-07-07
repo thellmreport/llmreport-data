@@ -14,22 +14,36 @@ Checks (error codes):
              not mint a new event)
   E-REF      referential integrity: verdict/publication/annotation for a
              nonexistent event; dangling correction_of / related_event_id;
-             evidence source_id not in registry/sources.json
+             evidence source_id not in registry/sources.json; annotation /
+             verdict manifest paths naming an unregistered source
   E-SEQ      verdict/annotation seq files not contiguous from 1
+  E-KEY      identity-key sidecar (identity-keys/<event_id>.json) does not
+             hash to the event id's hash8, or disagrees with the event's
+             provider/type (minting rule, design.md 1.2/1.4)
+  E-CORR     corroboration/independence semantics (design.md 1.4.3): a
+             corroboration annotation whose cited sources are not independent
+             of the event's evidence (mirror lineage must be recorded as
+             mirror-corroborated); a two-source confirm verdict citing no
+             independent source pair; rule-(c) provider-official confirm (or
+             two-source confirm without a positive-statement source) on an
+             api-absence negative inference (entitlement carve-out, 1.4.3c)
   E-LIFE     lifecycle legality: publication on a confirmed-only surface
              (x / bluesky) while not confirmed; any publication while a
-             discrepancy is open ("nothing publishes until resolved");
-             publication after a reject verdict (retracted)
+             discrepancy is open — verdict OR diff-engine discrepancy
+             annotation ("nothing publishes until resolved"); publication
+             after a reject verdict (retracted)
   E-REG      registry fails its schema
 
 NOT checked here (CI companion steps, need git):
   - event-file immutability + append-only dirs  -> llmreport_linter.immutability
   - writer identity path scoping (1.2/1.7)      -> llmreport_linter.path_scope
-  - hash8 == sha256(identity key): the key is not persisted in the event file
-    (schema is additionalProperties:false), so the linter enforces minting
-    structurally (format, date, placement, uniqueness, 72h window) and the
-    mint function itself is unit-tested; collectors MUST mint through
-    llmreport_linter.identity.mint_event_id.
+
+hash8 == sha256(identity key) IS verified whenever the collector persisted the
+key sidecar under identity-keys/ (corroboration hardening, design.md 1.4);
+events without a sidecar (pre-hardening stores, fixtures) fall back to the
+structural enforcement (format, date, placement, uniqueness, 72h window) and
+the golden-tested mint function; collectors MUST mint through
+llmreport_linter.identity.mint_event_id.
 """
 
 from __future__ import annotations
@@ -39,12 +53,18 @@ import json
 import re
 import sys
 from dataclasses import dataclass, field
-from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
 from . import schemas as sch
-from .identity import parse_rfc3339
+from .identity import hash8, parse_rfc3339
+from .independence import (
+    ATTACH_WINDOW,
+    SourceTrait,
+    any_independent,
+    confirms_api_absence,
+    source_id_from_manifest_path,
+)
 from .status import CONFIRMED_ONLY_SURFACES, derive_state, status_at
 
 EVENT_ID_RE = re.compile(r"^evt_(\d{8})_([a-f0-9]{8})$")
@@ -55,7 +75,12 @@ PUBLICATION_TS_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z$")
 #: design.md 1.4 candidate window: a delta matching an open candidate within
 #: 72 hours attaches as evidence; only after the window closes may a fresh
 #: delta mint a new event.
-CANDIDATE_WINDOW = timedelta(hours=72)
+CANDIDATE_WINDOW = ATTACH_WINDOW
+
+#: Annotation kinds whose related_manifest_paths point at fetch manifests.
+_MANIFEST_ANNOTATION_KINDS = frozenset(
+    {"corroboration", "mirror-corroborated", "rollback", "flap", "discrepancy"}
+)
 
 
 @dataclass
@@ -92,6 +117,7 @@ class Linter:
         self.publications: dict[str, list[dict[str, Any]]] = {}
         self.corrected_by: dict[str, list[str]] = {}
         self.source_ids: set[str] = set()
+        self.source_traits: dict[str, SourceTrait] = {}
 
     # -- helpers -------------------------------------------------------------
 
@@ -134,6 +160,11 @@ class Linter:
                 self._err("E-REG", rel, e)
         self.registry_doc = doc
         self.source_ids = {s["source_id"] for s in doc.get("sources", []) if "source_id" in s}
+        self.source_traits = {
+            s["source_id"]: SourceTrait.from_registry_record(s)
+            for s in doc.get("sources", [])
+            if "source_id" in s
+        }
 
     # -- events --------------------------------------------------------------
 
@@ -237,6 +268,184 @@ class Linter:
                         f"observed within the 72h candidate window ({obs_a} -> {obs_b}); "
                         "the delta must attach as corroborating evidence, not mint a new event",
                     )
+
+    # -- identity-key sidecars (corroboration hardening, design.md 1.4) --------
+
+    def check_identity_keys(self) -> None:
+        """identity-keys/<event_id>.json: the persisted candidate identity key.
+
+        Written by the collector at mint time so (a) hash8 is recomputable and
+        verified against the event id, and (b) the diff engine can detect
+        conflicting-value observations (same partial key, different new value).
+        Optional per event — pre-hardening stores have none."""
+        keys_dir = self.root / "identity-keys"
+        if not keys_dir.is_dir():
+            return
+        for path in sorted(keys_dir.glob("*.json")):
+            rel = self._rel(path)
+            m = EVENT_ID_RE.match(path.stem)
+            if not m:
+                self._err(
+                    "E-PATH", rel,
+                    "identity-key sidecars must be identity-keys/<event_id>.json",
+                )
+                continue
+            event_id = path.stem
+            doc = self._load(path, rel)
+            if doc is None:
+                continue
+            if not self._validate(sch.IDENTITY_KEY_SCHEMA, doc, rel):
+                continue
+            if event_id not in self.events:
+                self._err(
+                    "E-REF", rel,
+                    f"identity key for nonexistent event {event_id}",
+                )
+                continue
+            expected_h8 = EVENT_ID_RE.match(event_id).group(2)
+            try:
+                actual_h8 = hash8(doc)
+            except ValueError as exc:
+                self._err("E-KEY", rel, f"identity key not canonicalizable: {exc}")
+                continue
+            if actual_h8 != expected_h8:
+                self._err(
+                    "E-KEY", rel,
+                    f"sha256(identity key) = {actual_h8}, but the event id "
+                    f"carries {expected_h8} — the event was not minted from "
+                    "this key (design.md 1.2/1.4 minting rule)",
+                )
+            event = self.events[event_id]
+            for key_field, event_field in (("event_type", "type"), ("provider", "provider")):
+                if doc.get(key_field) != event.get(event_field):
+                    self._err(
+                        "E-KEY", rel,
+                        f"key {key_field} {doc.get(key_field)!r} != event "
+                        f"{event_field} {event.get(event_field)!r}",
+                    )
+
+    # -- corroboration / independence semantics (design.md 1.4.3) --------------
+
+    def _traits_for_manifests(
+        self, paths: list[str], rel: str, what: str
+    ) -> list[SourceTrait]:
+        """Resolve manifest paths to SourceTraits; unknown sources are E-REF
+        (and excluded from independence decisions — conservative)."""
+        traits: list[SourceTrait] = []
+        for p in paths:
+            if not isinstance(p, str):
+                continue
+            sid = source_id_from_manifest_path(p)
+            if sid is None:
+                continue  # non-standard path: schema allows it, nothing to check
+            if self.source_ids and sid not in self.source_ids:
+                self._err(
+                    "E-REF", rel,
+                    f"{what} manifest path names unregistered source {sid!r}",
+                )
+                continue
+            trait = self.source_traits.get(sid)
+            if trait is not None:
+                traits.append(trait)
+        return traits
+
+    def _event_evidence_traits(self, event_id: str) -> list[SourceTrait]:
+        traits = []
+        for ev in self.events.get(event_id, {}).get("evidence") or []:
+            if isinstance(ev, dict):
+                trait = self.source_traits.get(ev.get("source_id"))
+                if trait is not None:
+                    traits.append(trait)
+        return traits
+
+    def _is_api_absence(self, event_id: str) -> bool:
+        data = self.events.get(event_id, {}).get("data")
+        return isinstance(data, dict) and data.get("source_kind") == "api-absence"
+
+    def check_corroboration_semantics(self) -> None:
+        """A ``corroboration`` annotation claims independent two-source
+        corroboration (design.md 1.4.3a) — verify the claim against registry
+        class/lineage pins; mirrors must be ``mirror-corroborated`` instead.
+        Rule-(c) carve-out: on api-absence events, corroboration must come
+        from a positive-statement class (provider-docs / own-probe)."""
+        for event_id, anns in sorted(self.annotations.items()):
+            evidence_traits = self._event_evidence_traits(event_id)
+            for i, a in enumerate(anns, start=1):
+                kind = a.get("kind")
+                if kind not in _MANIFEST_ANNOTATION_KINDS:
+                    continue
+                rel = f"annotations/{event_id}/{i}.json"
+                cited = self._traits_for_manifests(
+                    a.get("related_manifest_paths") or [], rel, "annotation"
+                )
+                if kind != "corroboration":
+                    continue
+                if not cited:
+                    self._err(
+                        "E-CORR", rel,
+                        "corroboration annotation cites no resolvable evidence "
+                        "manifests — independence cannot be established",
+                    )
+                    continue
+                if not any_independent(cited, evidence_traits):
+                    self._err(
+                        "E-CORR", rel,
+                        "corroboration annotation cites no source independent of "
+                        "the event's evidence (different class AND lineage, "
+                        "design.md 1.4.3a) — mirrors must be recorded as "
+                        "mirror-corroborated",
+                    )
+                if self._is_api_absence(event_id) and not any(
+                    confirms_api_absence(t) for t in cited
+                ):
+                    self._err(
+                        "E-CORR", rel,
+                        "api-absence negative inference corroborated only by "
+                        "non-positive-statement sources — rule-(c) carve-out "
+                        "requires a docs page / provider changelog / second "
+                        "probe (design.md 1.4.3c)",
+                    )
+
+    def check_verdict_semantics(self) -> None:
+        """Confirm-verdict legality (design.md 1.4.3): two-source confirms must
+        cite an independent source pair; api-absence events accept neither a
+        provider-official confirm nor a two-source confirm without a
+        positive-statement source (entitlement carve-out)."""
+        for event_id, verdicts in sorted(self.verdicts.items()):
+            evidence_traits = self._event_evidence_traits(event_id)
+            absence = self._is_api_absence(event_id)
+            for i, v in enumerate(verdicts, start=1):
+                if v.get("verdict") != "confirm":
+                    continue
+                rel = f"verdicts/{event_id}/{i}.json"
+                rule = v.get("rule")
+                cited = self._traits_for_manifests(
+                    v.get("corroborating_evidence") or [], rel, "verdict"
+                )
+                if rule == "provider-official" and absence:
+                    self._err(
+                        "E-CORR", rel,
+                        "provider-official confirm on an api-absence negative "
+                        "inference — absence in an entitlement-scoped models "
+                        "list is excluded from rule (c) and requires class-(a) "
+                        "corroboration (design.md 1.4.3c)",
+                    )
+                if rule == "two-source" and cited:
+                    pool = evidence_traits + cited
+                    if not any_independent(cited, pool):
+                        self._err(
+                            "E-CORR", rel,
+                            "two-source confirm cites no independent source pair "
+                            "(different class AND lineage, design.md 1.4.3a) — "
+                            "mirror-corroborated-only candidates stay unconfirmed",
+                        )
+                    if absence and not any(confirms_api_absence(t) for t in cited):
+                        self._err(
+                            "E-CORR", rel,
+                            "two-source confirm on an api-absence negative "
+                            "inference cites no positive-statement source "
+                            "(provider-docs / own-probe; design.md 1.4.3c)",
+                        )
 
     # -- append-only chains ----------------------------------------------------
 
@@ -343,16 +552,22 @@ class Linter:
             self.publications[event_id] = records
 
     def check_lifecycle(self) -> None:
-        """Status x surface routing + discrepancy hold (design.md 1.4)."""
+        """Status x surface routing + discrepancy hold (design.md 1.4).
+
+        The hold covers discrepancy verdicts AND the diff engine's
+        conflicting-value discrepancy annotations."""
         for event_id, pubs in self.publications.items():
             verdicts = self.verdicts.get(event_id, [])
+            annotations = self.annotations.get(event_id, [])
             for p in pubs:
                 surface = p.get("surface")
                 published_at = p.get("published_at")
                 if not isinstance(published_at, str):
                     continue
                 try:
-                    status, discrepancy_open = status_at(verdicts, published_at)
+                    status, discrepancy_open = status_at(
+                        verdicts, published_at, annotations
+                    )
                 except (ValueError, KeyError):
                     continue  # schema errors already reported
                 where = f"publications/{event_id}/{surface}-{published_at.replace(':', '-')}.json"
@@ -429,8 +644,11 @@ class Linter:
         self.check_events()
         self.check_corrections()
         self.check_duplicate_candidates()
+        self.check_identity_keys()
         self.check_verdicts()
         self.check_annotations()
+        self.check_corroboration_semantics()
+        self.check_verdict_semantics()
         self.check_publications()
         self.check_lifecycle()
         self.check_snapshots()

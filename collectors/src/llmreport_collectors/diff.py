@@ -25,10 +25,13 @@ A first run with no prior snapshot seeds the baseline and yields no deltas.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
 from llmreport_linter.identity import canonicalize
+
+from .docs_extract import DOCS_MODEL_EVENTS
 
 #: incidents[].status modified emits outage.resolved only for these values
 #: (materiality rule condition).
@@ -259,8 +262,111 @@ def diff_statuspage(prev: dict | None, cur: dict) -> list[Delta]:
     return deltas
 
 
+_DOCS_MODEL_PATH_RE = re.compile(r"^models\[(.+)\]$")
+
+
+def diff_docs_html(prev: dict | None, cur: dict) -> list[Delta]:
+    """docs-html snapshots: extracted-item diff, typed by extraction rule.
+
+    Per the materiality table's ``by-extraction-rule`` hook, only field paths
+    the snapshot's extraction rule declares in DOCS_MODEL_EVENTS mint typed
+    deltas (models[<id>] added/removed -> model.released/model.deprecated).
+    Everything else — section content changes, model-section content changes,
+    undeclared rules — is diff.unclassified and goes to the exceptions queue,
+    never auto-published.
+    """
+    if prev is None:
+        return []
+    deltas: list[Delta] = []
+    prev_items = {i["field_path"]: i.get("value") for i in prev.get("extracted", [])}
+    cur_items = {i["field_path"]: i.get("value") for i in cur.get("extracted", [])}
+    model_events = DOCS_MODEL_EVENTS.get(cur.get("extraction_rule_id"), {})
+
+    def model_id(path: str) -> str | None:
+        m = _DOCS_MODEL_PATH_RE.match(path)
+        return m.group(1) if m else None
+
+    for path in sorted(cur_items.keys() - prev_items.keys()):
+        subject = model_id(path)
+        if subject and "added" in model_events:
+            deltas.append(
+                Delta(
+                    event_type=model_events["added"],
+                    field_path="models[].id",
+                    delta_kind="added",
+                    subject=subject,
+                    old=None,
+                    new=subject,
+                    extras={
+                        "model": {"context_window": None, "endpoints": []},
+                        "value": cur_items[path],
+                    },
+                )
+            )
+        else:
+            deltas.append(
+                Delta(
+                    event_type=None,
+                    field_path=path,
+                    delta_kind="added",
+                    subject=subject or path,
+                    old=None,
+                    new=canonicalize(cur_items[path]),
+                )
+            )
+    for path in sorted(prev_items.keys() - cur_items.keys()):
+        subject = model_id(path)
+        if subject and "removed" in model_events:
+            deltas.append(
+                Delta(
+                    event_type=model_events["removed"],
+                    field_path="models[].id",
+                    delta_kind="removed",
+                    subject=subject,
+                    old=subject,
+                    new=None,
+                    extras={
+                        "model": {"context_window": None, "endpoints": []},
+                        "value": prev_items[path],
+                        "source_kind": "docs",
+                    },
+                )
+            )
+        else:
+            deltas.append(
+                Delta(
+                    event_type=None,
+                    field_path=path,
+                    delta_kind="removed",
+                    subject=subject or path,
+                    old=canonicalize(prev_items[path]),
+                    new=None,
+                )
+            )
+    for path in sorted(prev_items.keys() & cur_items.keys()):
+        old_v = canonicalize(prev_items[path])
+        new_v = canonicalize(cur_items[path])
+        if old_v == new_v:
+            continue
+        # Modified extracted values are never auto-typed in Phase 1a — a
+        # changed changelog section or model-section body needs human
+        # classification (exceptions queue).
+        deltas.append(
+            Delta(
+                event_type=None,
+                field_path=path,
+                delta_kind="modified",
+                subject=model_id(path) or path,
+                old=old_v,
+                new=new_v,
+            )
+        )
+    return deltas
+
+
 DIFFERS = {
     "models-api": diff_models_api,
     "pricing-api": diff_pricing_api,
     "statuspage": diff_statuspage,
+    "docs-html": diff_docs_html,
 }

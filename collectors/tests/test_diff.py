@@ -6,11 +6,13 @@ from llmreport_collectors.diff import diff_models_api, diff_pricing_api, diff_st
 from llmreport_collectors.normalize import (
     normalize_litellm_prices,
     normalize_openrouter_models,
+    normalize_statuspage_atom,
     normalize_statuspage_incidents,
     normalize_statuspage_summary,
+    parse_atom_body,
 )
 
-from collector_rig import fixture_json
+from collector_rig import fixture_bytes, fixture_json
 
 
 def _snap(fn, name):
@@ -79,4 +81,29 @@ def test_statuspage_new_incident():
     deltas = diff_statuspage(prev, cur)
     assert [(d.event_type, d.subject) for d in deltas] == [
         ("outage.started", "inc-new-api-errors")
+    ]
+
+
+def _atom_snap(name):
+    snapshot, _ = normalize_statuspage_atom(parse_atom_body(fixture_bytes(name)))
+    return snapshot
+
+
+def test_statuspage_atom_started_and_resolved():
+    """Atom-normalized snapshots flow through the shared statuspage differ to
+    outage.started (incident appears) and outage.resolved (latest lifecycle
+    status crosses into resolved)."""
+    empty = _atom_snap("statuspage-anthropic-history.empty.xml")
+    opened = _atom_snap("statuspage-anthropic-history.open.xml")
+    resolved = _atom_snap("statuspage-anthropic-history.resolved.xml")
+
+    started = diff_statuspage(empty, opened)
+    assert [(d.event_type, d.subject) for d in started] == [
+        ("outage.started", "40000001")
+    ]
+
+    done = diff_statuspage(opened, resolved)
+    outage = [d for d in done if d.event_type == "outage.resolved"]
+    assert [(d.subject, d.old, d.new) for d in outage] == [
+        ("40000001", "investigating", "resolved")
     ]

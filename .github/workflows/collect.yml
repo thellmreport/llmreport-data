@@ -52,7 +52,12 @@ jobs:
       # fetchkit fetch library (identified UA, conditional GET, robots
       # re-check per cycle, query-credential stripping). TODO(activation):
       # inert until the repo + bot tokens exist; remove the guard then.
+      # HC_PING_URL is the healthchecks.io dead-man ping URL (design.md 5.3):
+      # the runner POSTs success/fail per run via llmreport_watch.heartbeat -
+      # secret-held, never hardcoded; unset secret = warning-logged no-op.
       - name: Run collectors
+        env:
+          HC_PING_URL: ${{ secrets.HC_PING_URL }}
         run: |
           echo "TODO(activation): uv run python -m llmreport_collectors --repo-root . --out ."
           exit 1

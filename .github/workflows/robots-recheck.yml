@@ -3,6 +3,19 @@
 # Hourly collectors already re-check robots every cycle for the hosts they hit;
 # this job is the scheduled full sweep that also covers weekly-cadence
 # policy-page hosts, and diffs stance INCLUDING Content Signals.
+#
+# Module: tools/watch/llmreport_watch/robots_recheck.py. Exit codes:
+# 0 = clean sweep; 2 = queue items emitted (stance change / first-run seed /
+# unreachable robots / Content-Signal pin mismatch) -> the step FAILS LOUDLY
+# and the follow-up step turns every queue line into a GitHub issue;
+# the pipeline never silently adapts to a policy change.
+#
+# State acceptance model: the module writes the observed stance to
+# registry/robots-state/<host>.json in the checkout; accepting a change (or
+# the first-run seed) means committing that state via a reviewed PR. Until
+# the collector-bot PAT exists (STATUS.md blocked list) the updated state
+# is uploaded as a run artifact and the queue issue tells the owner to commit
+# it — the alert repeats weekly until the new stance is accepted.
 name: robots-recheck (weekly)
 
 on:
@@ -20,8 +33,9 @@ env:
 
 jobs:
   recheck:
-    # Gated until fetchkit's robots module lands (Phase 1); if enabled early,
-    # the TODO step fails loudly rather than pretending the sweep ran.
+    # Gated by the SENTINELS_ENABLED repo variable (activation pattern,
+    # STATUS.md): scheduled runs stay inert until it is set to 'true';
+    # manual dispatch always runs for verification.
     if: ${{ vars.SENTINELS_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-24.04
     steps:
@@ -39,22 +53,50 @@ jobs:
       - name: Sync environment (locked)
         run: uv sync --frozen
 
-      # TODO(activation): fetchkit robots module (Phase 1). Contract:
-      #   - fetch robots.txt for every distinct host in registry/sources.json
-      #     (identified UA, conditional GET, never circumvent bot walls),
-      #   - parse stance for TheLLMReportBot + Content Signals,
-      #   - diff against the previously committed stance snapshot,
-      #   - non-empty diff => nonzero exit + machine-readable report.
+      # Fetches robots.txt once per directly-fetched registry host through
+      # fetchkit's transport (identified UA, audit-logged, excluded hosts
+      # never contacted), reduces each response to the bot's stance and
+      # diffs against registry/robots-state/. Nonzero exit on any item.
       - name: Re-fetch and diff robots stances
-        run: |
-          echo "TODO(activation): uv run python -m fetchkit.robots_recheck --registry registry/sources.json --out ${{ runner.temp }}/robots-stance.json"
-          exit 1
+        run: >
+          uv run python -m llmreport_watch.robots_recheck
+          --repo-root . --out ${{ runner.temp }}/robots-recheck
 
-      # design.md: open an exceptions-queue item on ANY stance change - the
-      # pipeline never silently adapts to a policy change.
-      - name: Open exceptions-queue item on stance change
+      - name: Upload stance state + report + queue
+        if: always()
+        uses: actions/upload-artifact@v4.6.0 # pinned
+        with:
+          name: robots-recheck-${{ github.run_id }}
+          if-no-files-found: ignore
+          path: |
+            ${{ runner.temp }}/robots-recheck
+            registry/robots-state/
+            queue/
+
+      # design.md: open an exceptions-queue item on ANY stance change — one
+      # GitHub issue per queue line (queue/ JSONL convention, design.md 5.3
+      # Tier 1). Labels are assumed to exist (repo bootstrap).
+      - name: Open exceptions-queue issues on stance change
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "TODO(activation): gh issue create --label exceptions-queue,robots --title 'robots stance change detected' --body-file ${{ runner.temp }}/robots-stance.json"
+          set -euo pipefail
+          shopt -s nullglob
+          for file in queue/robots_recheck/*.jsonl; do
+            while IFS= read -r line; do
+              [ -z "$line" ] && continue
+              title=$(jq -r '.title' <<<"$line")
+              {
+                echo "severity: $(jq -r '.severity' <<<"$line")"
+                echo "kind: $(jq -r '.kind' <<<"$line")"
+                echo "action required: $(jq -r '.action_required' <<<"$line")"
+                echo
+                echo '```json'
+                jq . <<<"$line"
+                echo '```'
+              } > "$RUNNER_TEMP/issue-body.md"
+              gh issue create --label exceptions-queue,robots \
+                --title "$title" --body-file "$RUNNER_TEMP/issue-body.md"
+            done < "$file"
+          done

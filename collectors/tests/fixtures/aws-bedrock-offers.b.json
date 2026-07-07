@@ -1,0 +1,272 @@
+{
+ "disclaimer": "TRIMMED FIXTURE from the live smoke fetch of 2026-07-07 (fixture provenance: recorded)",
+ "formatVersion": "v1.0",
+ "offerCode": "AmazonBedrock",
+ "products": {
+  "5UDDRHH997B9FJ63": {
+   "attributes": {
+    "feature": "Batch Inference",
+    "inferenceType": "Input tokens",
+    "location": "US East (N. Virginia)",
+    "locationType": "AWS Region",
+    "model": "Nova 2.0 Lite",
+    "operation": "",
+    "regionCode": "us-east-1",
+    "servicecode": "AmazonBedrock",
+    "servicename": "Amazon Bedrock",
+    "usagetype": "USE1-Nova2.0Lite-input-tokens-batch"
+   },
+   "productFamily": "Amazon Bedrock",
+   "sku": "5UDDRHH997B9FJ63"
+  },
+  "83U3G5RSJJF89KY7": {
+   "attributes": {
+    "inferenceType": "Input tokens",
+    "location": "US East (N. Virginia)",
+    "locationType": "AWS Region",
+    "model": "Nova 2.0 Lite",
+    "operation": "",
+    "regionCode": "us-east-1",
+    "servicecode": "AmazonBedrock",
+    "servicename": "Amazon Bedrock",
+    "usagetype": "USE1-Nova2.0Lite-input-tokens-cross-region-global-batch"
+   },
+   "productFamily": "Amazon Bedrock",
+   "sku": "83U3G5RSJJF89KY7"
+  },
+  "9466MFKTBJUDFPCU": {
+   "attributes": {
+    "feature": "On-demand Inference",
+    "inferenceType": "Input tokens",
+    "location": "US West (Oregon)",
+    "locationType": "AWS Region",
+    "model": "Claude 3 Sonnet",
+    "operation": "",
+    "provider": "Anthropic",
+    "regionCode": "us-west-2",
+    "servicecode": "AmazonBedrock",
+    "servicename": "Amazon Bedrock",
+    "usagetype": "USW2-Claude3Sonnet-input-tokens"
+   },
+   "productFamily": "Amazon Bedrock",
+   "sku": "9466MFKTBJUDFPCU"
+  },
+  "9695KVZFNHZKXKKM": {
+   "attributes": {
+    "feature": "Batch Inference",
+    "inferenceType": "Output tokens",
+    "location": "US East (N. Virginia)",
+    "locationType": "AWS Region",
+    "model": "Nova 2.0 Lite",
+    "operation": "",
+    "regionCode": "us-east-1",
+    "servicecode": "AmazonBedrock",
+    "servicename": "Amazon Bedrock",
+    "usagetype": "USE1-Nova2.0Lite-output-tokens-batch"
+   },
+   "productFamily": "Amazon Bedrock",
+   "sku": "9695KVZFNHZKXKKM"
+  },
+  "DY69Q8C3F88CHA2Q": {
+   "attributes": {
+    "feature": "On-demand Inference",
+    "inferenceType": "Output tokens",
+    "location": "US East (N. Virginia)",
+    "locationType": "AWS Region",
+    "model": "Nova 2.0 Lite",
+    "operation": "",
+    "regionCode": "us-east-1",
+    "servicecode": "AmazonBedrock",
+    "servicename": "Amazon Bedrock",
+    "usagetype": "USE1-Nova2.0Lite-output-tokens"
+   },
+   "productFamily": "Amazon Bedrock",
+   "sku": "DY69Q8C3F88CHA2Q"
+  },
+  "EPMQ24NAG4R6FPX8": {
+   "attributes": {
+    "inferenceType": "Input tokens",
+    "location": "US East (N. Virginia)",
+    "locationType": "AWS Region",
+    "model": "Nova 2.0 Lite",
+    "operation": "",
+    "regionCode": "us-east-1",
+    "servicecode": "AmazonBedrock",
+    "servicename": "Amazon Bedrock",
+    "usagetype": "USE1-Nova2.0Lite-input-tokens-cross-region-global"
+   },
+   "productFamily": "Amazon Bedrock",
+   "sku": "EPMQ24NAG4R6FPX8"
+  },
+  "ZEJSXGT973DYB7JF": {
+   "attributes": {
+    "feature": "On-demand Inference",
+    "inferenceType": "Input tokens",
+    "location": "US East (N. Virginia)",
+    "locationType": "AWS Region",
+    "model": "Claude 3 Sonnet",
+    "operation": "",
+    "provider": "Anthropic",
+    "regionCode": "us-east-1",
+    "servicecode": "AmazonBedrock",
+    "servicename": "Amazon Bedrock",
+    "usagetype": "USE1-Claude3Sonnet-input-tokens"
+   },
+   "productFamily": "Amazon Bedrock",
+   "sku": "ZEJSXGT973DYB7JF"
+  }
+ },
+ "publicationDate": "2026-07-07T08:05:09Z",
+ "terms": {
+  "OnDemand": {
+   "5UDDRHH997B9FJ63": {
+    "5UDDRHH997B9FJ63.JRTCKXETXF": {
+     "effectiveDate": "2026-07-01T00:00:00Z",
+     "offerTermCode": "JRTCKXETXF",
+     "priceDimensions": {
+      "5UDDRHH997B9FJ63.JRTCKXETXF.6YS6EN2CT7": {
+       "appliesTo": [],
+       "beginRange": "0",
+       "description": "$0.000165 per 1K tokens for USE1-Nova2.0Lite-input-tokens-batch in US East (N. Virginia)",
+       "endRange": "Inf",
+       "pricePerUnit": {
+        "USD": "0.0001650000"
+       },
+       "rateCode": "5UDDRHH997B9FJ63.JRTCKXETXF.6YS6EN2CT7",
+       "unit": "1K tokens"
+      }
+     },
+     "sku": "5UDDRHH997B9FJ63",
+     "termAttributes": {}
+    }
+   },
+   "83U3G5RSJJF89KY7": {
+    "83U3G5RSJJF89KY7.JRTCKXETXF": {
+     "effectiveDate": "2026-07-01T00:00:00Z",
+     "offerTermCode": "JRTCKXETXF",
+     "priceDimensions": {
+      "83U3G5RSJJF89KY7.JRTCKXETXF.6YS6EN2CT7": {
+       "appliesTo": [],
+       "beginRange": "0",
+       "description": "$0.00015 per 1K token for Nova2.0Lite-input-tokens-cross-region-global-batch in US East (N. Virginia)",
+       "endRange": "Inf",
+       "pricePerUnit": {
+        "USD": "0.0001500000"
+       },
+       "rateCode": "83U3G5RSJJF89KY7.JRTCKXETXF.6YS6EN2CT7",
+       "unit": "1K tokens"
+      }
+     },
+     "sku": "83U3G5RSJJF89KY7",
+     "termAttributes": {}
+    }
+   },
+   "9466MFKTBJUDFPCU": {
+    "9466MFKTBJUDFPCU.JRTCKXETXF": {
+     "effectiveDate": "2026-07-01T00:00:00Z",
+     "offerTermCode": "JRTCKXETXF",
+     "priceDimensions": {
+      "9466MFKTBJUDFPCU.JRTCKXETXF.6YS6EN2CT7": {
+       "appliesTo": [],
+       "beginRange": "0",
+       "description": "$0.00300 per 1K tokens for Claude3Sonnet-input-tokens inUS West (Oregon)",
+       "endRange": "Inf",
+       "pricePerUnit": {
+        "USD": "0.0033000000"
+       },
+       "rateCode": "9466MFKTBJUDFPCU.JRTCKXETXF.6YS6EN2CT7",
+       "unit": "1K tokens"
+      }
+     },
+     "sku": "9466MFKTBJUDFPCU",
+     "termAttributes": {}
+    }
+   },
+   "9695KVZFNHZKXKKM": {
+    "9695KVZFNHZKXKKM.JRTCKXETXF": {
+     "effectiveDate": "2026-07-01T00:00:00Z",
+     "offerTermCode": "JRTCKXETXF",
+     "priceDimensions": {
+      "9695KVZFNHZKXKKM.JRTCKXETXF.6YS6EN2CT7": {
+       "appliesTo": [],
+       "beginRange": "0",
+       "description": "$0.001375 per 1K tokens for USE1-Nova2.0Lite-output-tokens-batch in US East (N. Virginia)",
+       "endRange": "Inf",
+       "pricePerUnit": {
+        "USD": "0.0013750000"
+       },
+       "rateCode": "9695KVZFNHZKXKKM.JRTCKXETXF.6YS6EN2CT7",
+       "unit": "1K tokens"
+      }
+     },
+     "sku": "9695KVZFNHZKXKKM",
+     "termAttributes": {}
+    }
+   },
+   "DY69Q8C3F88CHA2Q": {
+    "DY69Q8C3F88CHA2Q.JRTCKXETXF": {
+     "effectiveDate": "2026-07-01T00:00:00Z",
+     "offerTermCode": "JRTCKXETXF",
+     "priceDimensions": {
+      "DY69Q8C3F88CHA2Q.JRTCKXETXF.6YS6EN2CT7": {
+       "appliesTo": [],
+       "beginRange": "0",
+       "description": "$0.00275 per 1K tokens for USE1-Nova2.0Lite-output-tokens in US East (N. Virginia)",
+       "endRange": "Inf",
+       "pricePerUnit": {
+        "USD": "0.0027500000"
+       },
+       "rateCode": "DY69Q8C3F88CHA2Q.JRTCKXETXF.6YS6EN2CT7",
+       "unit": "1K tokens"
+      }
+     },
+     "sku": "DY69Q8C3F88CHA2Q",
+     "termAttributes": {}
+    }
+   },
+   "EPMQ24NAG4R6FPX8": {
+    "EPMQ24NAG4R6FPX8.JRTCKXETXF": {
+     "effectiveDate": "2026-07-01T00:00:00Z",
+     "offerTermCode": "JRTCKXETXF",
+     "priceDimensions": {
+      "EPMQ24NAG4R6FPX8.JRTCKXETXF.6YS6EN2CT7": {
+       "appliesTo": [],
+       "beginRange": "0",
+       "description": "$0.0003 per 1K token for Nova2.0Lite-input-tokens-cross-region-global in US East (N. Virginia)",
+       "endRange": "Inf",
+       "pricePerUnit": {
+        "USD": "0.0003000000"
+       },
+       "rateCode": "EPMQ24NAG4R6FPX8.JRTCKXETXF.6YS6EN2CT7",
+       "unit": "1K tokens"
+      }
+     },
+     "sku": "EPMQ24NAG4R6FPX8",
+     "termAttributes": {}
+    }
+   },
+   "ZEJSXGT973DYB7JF": {
+    "ZEJSXGT973DYB7JF.JRTCKXETXF": {
+     "effectiveDate": "2026-07-01T00:00:00Z",
+     "offerTermCode": "JRTCKXETXF",
+     "priceDimensions": {
+      "ZEJSXGT973DYB7JF.JRTCKXETXF.6YS6EN2CT7": {
+       "appliesTo": [],
+       "beginRange": "0",
+       "description": "$0.00300 per 1K tokens for Claude3Sonnet-input-tokens inUS East (N. Virginia)",
+       "endRange": "Inf",
+       "pricePerUnit": {
+        "USD": "0.0033000000"
+       },
+       "rateCode": "ZEJSXGT973DYB7JF.JRTCKXETXF.6YS6EN2CT7",
+       "unit": "1K tokens"
+      }
+     },
+     "sku": "ZEJSXGT973DYB7JF",
+     "termAttributes": {}
+    }
+   }
+  }
+ },
+ "version": "20260707080509"
+}

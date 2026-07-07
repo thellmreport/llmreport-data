@@ -56,6 +56,19 @@ NAMESPACE_PRECEDENCE = (
     ("azure-openai", "azure-openai"),
 )
 
+#: Direct provider namespaces (non-aggregator collectors): the namespace IS
+#: the provider mapping — part of mapping rule ``provider-map-v1``.
+DIRECT_NAMESPACE_TO_PROVIDER = {
+    "openai": "openai",
+    "anthropic": "anthropic",
+    "google-gemini": "google",
+    "google-vertex": "google",
+    "mistral": "mistral",
+    "xai": "xai",
+    "aws-bedrock": "aws-bedrock",
+    "azure-openai": "azure-openai",
+}
+
 
 @dataclass(frozen=True)
 class Resolution:
@@ -100,7 +113,7 @@ class AliasIndex:
         return None
 
     def resolve(self, namespace: str, model_ref: str) -> Resolution:
-        """Resolve an aggregator model id to (canonical_model_id, provider)."""
+        """Resolve a source-native model id to (canonical_model_id, provider)."""
         canonical = self.canonical_for(namespace, model_ref)
         provider: str | None = None
         prefix = model_ref.split("/", 1)[0] if "/" in model_ref else None
@@ -111,4 +124,9 @@ class AliasIndex:
                 provider = LITELLM_PREFIX_TO_PROVIDER.get(prefix)
             elif canonical is not None:
                 provider = self._provider_from_entry(canonical)
+        else:
+            # Direct provider namespaces (mistral docs, xai docs, aws-bedrock
+            # pricing, azure-openai pricing, ...): the namespace decides the
+            # provider (provider-map-v1).
+            provider = DIRECT_NAMESPACE_TO_PROVIDER.get(namespace)
         return Resolution(canonical_model_id=canonical, provider=provider)
