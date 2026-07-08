@@ -126,14 +126,20 @@ Carried from Phase 0 (still open):
 - Create GitHub repos, branch protection + merge queue + required checks,
   secret scanning + push protection.
 - Bot identities + fine-grained PATs; signed commits; SHA-pin all Actions.
-- Import the ToU sweep archive into `compliance/tou-sweep-2026-07/`.
+- ~~Import the ToU sweep archive into `compliance/tou-sweep-2026-07/`.~~ DONE
+  2026-07-08: all 8 clearances + summary imported (amended verbatim per the
+  binding verifier dissents, applied + re-verified 2026-07-08); `compliance/`
+  gets a README. PII guard + redaction gate GREEN over the import.
 - Set `LLMREPORT_CODE_SHA` from real commit SHAs once history exists.
 
 New in Phase 1a:
 - `robots-state/`, `sentinel-state/`, and seeded sentinel references cannot be
   pushed by the workflows until bot PATs exist — state is artifact-uploaded and
   the queue issue instructs the commit; weekly alerts repeat until accepted.
-- `HC_PING_URL` secret must be provisioned before `collect.yml` heartbeats.
+- ~~`HC_PING_URL` secret must be provisioned before `collect.yml` heartbeats.~~
+  DONE 2026-07-08: `HC_PING_URL` (+ `HC_PING_URL_VERIFY`) set on llmreport-data;
+  4 healthchecks.io cron checks created (collect/verify hourly, robots/sentinels
+  weekly).
 - Flip `SENTINELS_ENABLED=true` once bot PATs land, then `COLLECT_ENABLED`.
 
 ## Structural findings (this review) — filed, not code-blocking
