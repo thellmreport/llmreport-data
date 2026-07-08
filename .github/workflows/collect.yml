@@ -26,7 +26,8 @@ concurrency:
   cancel-in-progress: false # never kill a half-finished evidence write; queue instead
 
 env:
-  UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/llmreport-venv # local-venv pattern
+  # local-venv pattern set per-job via $GITHUB_ENV: the `runner` context does
+  # not exist at workflow-level `env` (compile error; fixed 2026-07-08)
   UV_PYTHON: "3.12"
 
 jobs:
@@ -44,6 +45,9 @@ jobs:
 
       - name: Install uv (pinned)
         run: pip install uv==0.7.13
+
+      - name: Point uv's venv at local disk (local-venv pattern)
+        run: echo "UV_PROJECT_ENVIRONMENT=$RUNNER_TEMP/llmreport-venv" >> "$GITHUB_ENV"
 
       - name: Sync environment (locked)
         run: uv sync --frozen

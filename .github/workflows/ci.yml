@@ -13,10 +13,10 @@ permissions:
   contents: read
 
 env:
-  # Local-venv pattern: the working copy may live on a slow/network mount, so
-  # the venv always goes to fast local disk. Mirrors the dev convention
-  # UV_PROJECT_ENVIRONMENT=$TEMP/llmreport-venv (see pyproject.toml).
-  UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/llmreport-venv
+  # Local-venv pattern (venv on fast local disk; see pyproject.toml) is set
+  # per-job via $GITHUB_ENV: the `runner` context does NOT exist at
+  # workflow-level `env` - referencing it here is a compile error that
+  # startup-failed every run of every workflow in this repo until 2026-07-08.
   UV_PYTHON: "3.12"
 
 jobs:
@@ -34,6 +34,9 @@ jobs:
 
       - name: Install uv (pinned)
         run: pip install uv==0.7.13
+
+      - name: Point uv's venv at local disk (local-venv pattern)
+        run: echo "UV_PROJECT_ENVIRONMENT=$RUNNER_TEMP/llmreport-venv" >> "$GITHUB_ENV"
 
       - name: Sync environment (locked)
         run: uv sync --frozen
@@ -86,6 +89,9 @@ jobs:
 
       - name: Install uv (pinned)
         run: pip install uv==0.7.13
+
+      - name: Point uv's venv at local disk (local-venv pattern)
+        run: echo "UV_PROJECT_ENVIRONMENT=$RUNNER_TEMP/llmreport-venv" >> "$GITHUB_ENV"
 
       - name: Sync environment (locked)
         run: uv sync --frozen

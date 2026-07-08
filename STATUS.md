@@ -147,6 +147,17 @@ New in Phase 1a:
 3. **design.md §1.3 source-matrix back-annotation** for the Anthropic atom swap,
    the Mistral raw-file override, and the Phase 1a sources remains a follow-up
    (git/narrative is the main session's responsibility).
+4. **Actions never actually ran** — FOUND + FIXED 2026-07-08: every workflow
+   run since Phase 0 (incl. ci.yml on every push) startup-failed with
+   "workflow file issue" and zero jobs. Root cause: all workflows set
+   `UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/llmreport-venv` in
+   **workflow-level `env`**, but the `runner` context does not exist there
+   (only `github`/`inputs`/`vars`/`secrets` do) — a compile-time error that
+   also produced failed push-event stubs for the schedule-only templates.
+   All "GREEN" workflow claims above were local module verification; the
+   Actions surface itself was dead. Fix: `UV_PYTHON` stays workflow-level,
+   `UV_PROJECT_ENVIRONMENT` is set per-job via `$GITHUB_ENV` (RUNNER_TEMP).
+   ci.yml verified green on GitHub after the fix.
 
 ## Phase 1b — what remains
 
