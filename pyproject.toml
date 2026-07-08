@@ -38,13 +38,14 @@ build-backend = "hatchling.build"
 packages = [
   "tools/linter/llmreport_linter",
   "tools/watch/llmreport_watch",
+  "tools/verifier/llmreport_verifier",
   "collectors/src/llmreport_collectors",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tools", "lib/fetchkit/tests", "collectors/tests"]
 # Guards are standalone scripts (not an installed package); make them importable
-# in tests. tools/watch is on the path too so watch tests run against the tree
-# even before a re-sync installs the llmreport_watch package.
-pythonpath = ["tools/guards", "tools/watch"]
+# in tests. tools/watch and tools/verifier are on the path too so their tests
+# run against the tree even before a re-sync installs the packages.
+pythonpath = ["tools/guards", "tools/watch", "tools/verifier"]
 addopts = "-p no:cacheprovider"

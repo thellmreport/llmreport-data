@@ -20,11 +20,12 @@ state: see `STATUS.md`.
 | `lib/fetchkit/` | The only code allowed to touch the network. Registry-enforced allowlist, robots gate, credential send-refusal (§1.5), conditional GET, pagination + body-size guards, evidence bytes + manifests, JSONL request audit |
 | `collectors/` | 11 no-auth collectors (Phase 0: OpenRouter models, LiteLLM prices, OpenAI + Anthropic status; Phase 1a: AWS Bedrock + Azure pricing, AWS Health + Azure + Mistral status, Mistral models, generic docs changelogs) — normalize → snapshot → materiality diff → deterministic event minting → corroboration engine |
 | `tools/linter/` | Store linter: schema validation, id minting rules, identity-key sidecar + independence/corroboration checks, verdict-chain status fold, publish legality, cross-file integrity; emits `derived/state.json` |
-| `tools/guards/` | Redaction gate (§1.5) and PII guard — required CI checks |
+| `tools/verifier/` | Deterministic verifier (`llmreport_verifier`) — the verifier identity's pipeline and the only writer of `verdicts/**`: consumes collector verdict drafts as hints, sweeps the store, re-derives independence from annotations + registry pins, appends rule-(a)/(c) confirm verdicts (§1.4.3) |
+| `tools/guards/` | Redaction gate (§1.5; scans store dirs + `queue/*.jsonl`) and PII guard — required CI checks |
 | `tools/watch/` | Scheduled watch jobs (`llmreport_watch`): weekly robots.txt re-check, registry-driven compliance sentinels, healthchecks.io dead-man heartbeat (wired into the collector runner) |
 | `fixtures/` | Valid/invalid fixtures per schema + `fixtures/store/` mini-store exercising every §1.4 verification path |
 | `queue/` | Exceptions-queue drop directory (`queue/<emitter>/<run-ts>.jsonl`); CI turns each line into a GitHub issue. Only `README.md` is tracked |
-| `.github/workflows/` | `ci.yml` (active); `robots-recheck.yml` + `sentinel.yml` invoke the real `llmreport_watch` modules (gated by `SENTINELS_ENABLED`); `collect.yml` gated until repo + bot credentials exist |
+| `.github/workflows/` | `ci.yml` (active); `robots-recheck.yml` + `sentinel.yml` invoke the real `llmreport_watch` modules (gated by `SENTINELS_ENABLED`); `collect.yml` + `verify.yml` gated (`COLLECT_ENABLED` / `VERIFY_ENABLED`) until repo + bot credentials exist |
 | `derived/` | Linter-computed event state (never hand-edited) |
 
 Events are immutable once merged; verdicts/publications/annotations are

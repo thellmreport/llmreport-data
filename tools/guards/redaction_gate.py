@@ -17,9 +17,12 @@ been redacted before commit:
      (https://user:pass@host).
 
 Scope: JSON files under the store's data dirs (manifests/, events/,
-snapshots/, verdicts/, publications/, annotations/, derived/, registry/).
-fixtures/ is NOT in the default scope - unit tests point the gate at
-fixtures/guards/redaction/** explicitly.
+snapshots/, verdicts/, publications/, annotations/, derived/, registry/)
+plus the exceptions queue (queue/<emitter>/*.jsonl, scanned line-by-line -
+STATUS.md Phase 1a finding 2: queue items are built from robots rules /
+hashes / paths, never headers, but the gate covers them before the queue
+goes live). fixtures/ is NOT in the default scope - unit tests point the
+gate at fixtures/guards/redaction/** explicitly.
 
 Exit codes: 0 clean, 1 violations, 2 usage error.
 """
@@ -43,6 +46,7 @@ DEFAULT_SCAN_DIRS = (
     "annotations",
     "derived",
     "registry",
+    "queue",
 )
 
 FORBIDDEN_HEADER_KEYS = {
@@ -132,7 +136,8 @@ def scan_instance(doc: Any) -> list[str]:
 
 
 def scan_tree(root: Path, scan_dirs: tuple[str, ...] = DEFAULT_SCAN_DIRS) -> list[str]:
-    """Scan JSON files under root's scan dirs; returns '<relpath> <pointer>: reason'."""
+    """Scan JSON (and line-by-line JSONL) files under root's scan dirs;
+    returns '<relpath>[:line] <pointer>: reason'."""
     violations: list[str] = []
     for d in scan_dirs:
         base = root / d
@@ -147,6 +152,22 @@ def scan_tree(root: Path, scan_dirs: tuple[str, ...] = DEFAULT_SCAN_DIRS) -> lis
                 violations.append(f"{rel}: unreadable JSON ({exc})")
                 continue
             violations.extend(f"{rel} {v}" for v in scan_instance(doc))
+        for path in sorted(base.rglob("*.jsonl")):
+            rel = path.relative_to(root).as_posix()
+            try:
+                lines = path.read_text(encoding="utf-8").splitlines()
+            except (OSError, UnicodeDecodeError) as exc:
+                violations.append(f"{rel}: unreadable ({exc})")
+                continue
+            for lineno, line in enumerate(lines, start=1):
+                if not line.strip():
+                    continue
+                try:
+                    doc = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    violations.append(f"{rel}:{lineno}: unreadable JSONL line ({exc})")
+                    continue
+                violations.extend(f"{rel}:{lineno} {v}" for v in scan_instance(doc))
     return violations
 
 

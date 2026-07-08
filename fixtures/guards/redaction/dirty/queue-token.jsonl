@@ -1,0 +1,2 @@
+{"queue":"exceptions","emitter":"rig","kind":"source.failed","severity":"warning","subject":"example-api","title":"clean first line","source_ids":[],"details":{},"action_required":"none","queued_at":"2026-07-08T02:00:00Z","auto_publish":false}
+{"queue":"exceptions","emitter":"rig","kind":"source.failed","severity":"warning","subject":"example-api","title":"dirty second line","source_ids":[],"details":{"note":"request failed with key sk-ABCDEFGHIJKLMNOPQRST in flight"},"action_required":"none","queued_at":"2026-07-08T02:01:00Z","auto_publish":false}

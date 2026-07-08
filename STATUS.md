@@ -7,6 +7,9 @@ credentials / probe accounts — none on code.
 
 - **Phase 0 integration review:** 2026-07-07 → GREEN
 - **Phase 1a integration review:** 2026-07-07 → **GREEN**
+- **Phase 1b (in progress):** verification pipeline + redaction-gate queue
+  scope landed 2026-07-08 → **GREEN** (318 tests). Remaining: Managed Agents
+  deployment; probe harness (blocked on owner probe accounts).
 
 ## Phase 1a component status
 
@@ -24,6 +27,20 @@ credentials / probe accounts — none on code.
 | Schema: annotation kinds | `schemas/annotation.v2.json` | GREEN | `corroboration` kind added; metaschema ok |
 | Workflows | `.github/workflows/{robots-recheck,sentinel,collect}.yml` | GREEN | robots-recheck/sentinel invoke real modules (gated `SENTINELS_ENABLED`); collect adds `HC_PING_URL` secret |
 
+## Phase 1b component status (2026-07-08)
+
+| Component | Location | Status | Verification |
+|---|---|---|---|
+| Verifier pipeline (`llmreport_verifier`) | `tools/verifier/llmreport_verifier/` | GREEN | Deterministic rules (a) two-source + (c) provider-official (design.md 1.4.3); drafts are hints only — everything re-derived from store annotations + registry pins; conservative skips (flap/rollback, open discrepancy, idempotence, reject stands, unauditable manifests); 26 pipeline + 5 store-I/O + 5 CLI tests; fixture-store integration run appends nothing and keeps the real linter GREEN |
+| verify workflow | `.github/workflows/verify.yml` | TEMPLATE (gated `VERIFY_ENABLED`) | Mirrors collect.yml; cron 37 * * * * (post-collect); activation flow commits ONLY `verdicts/**` as verifier-bot via the merge queue — path scope makes any other write fail the required linter check |
+| Redaction gate queue scope | `tools/guards/redaction_gate.py` | GREEN | `queue/` added to default scan dirs; `*.jsonl` scanned line-by-line with line-numbered violations (finding 2 below resolved); 4 new tests + clean/dirty JSONL fixtures |
+
+Dual-agent separation preserved end-to-end: collectors surface drafts and
+never write `verdicts/**` (Phase 1a pin); the verifier writes ONLY
+`verdicts/**` (`VerifierStore` has no other write path) and never edits a
+candidate. Rule (b) direct-probe is structurally accommodated, not
+implemented — blocked on probe accounts.
+
 ## Test tallies (re-run in full during this review, 2026-07-07)
 
 - `uv sync --frozen`: ok (36 packages)
@@ -35,6 +52,12 @@ credentials / probe accounts — none on code.
 - pytest (exact CI invocation `pytest tools lib/fetchkit/tests collectors/tests -q`):
   **278 passed, 0 failed** (was 167 at Phase 0; +111 across Phase 1a and the
   parallel corroboration/watch work).
+
+Phase 1b re-run (2026-07-08, full CI battery): `uv sync --frozen` ok;
+check-jsonschema (metaschema + registry) ok; store linter GREEN; redaction
+gate GREEN (now incl. queue scope); PII guard GREEN; pytest **318 passed,
+0 failed** (+36 verifier: 26 pipeline / 5 store-I/O / 5 CLI; +4
+redaction-gate JSONL).
 
 ## Cross-consistency checks performed (Phase 1a review)
 
@@ -115,26 +138,25 @@ New in Phase 1a:
 
 ## Structural findings (this review) — filed, not code-blocking
 
-1. **Queue runtime files not gitignored**: `queue/` tracks only `README.md`;
-   runtime `queue/<emitter>/*.jsonl` is CI-artifact-uploaded, but a stray local
-   run could commit data. Consider adding `queue/*/` to `.gitignore` (parallels
-   `var/`).
-2. **Redaction gate does not scan `queue/*.jsonl`** (it scans `*.json` in fixed
-   dirs). Items are built only from robots rules/hashes/paths — never headers —
-   so exposure risk is low, but the guard scope should be extended when the
-   queue goes live (builder deviation 7).
+1. **Queue runtime files not gitignored** — RESOLVED (`.gitignore` carries
+   `queue/*/`, parallel to `var/`).
+2. **Redaction gate does not scan `queue/*.jsonl`** — RESOLVED 2026-07-08:
+   `queue/` joined the default scan dirs and `*.jsonl` files are scanned
+   line-by-line (violations carry line numbers); clean/dirty fixtures + tests
+   added (builder deviation 7 closed).
 3. **design.md §1.3 source-matrix back-annotation** for the Anthropic atom swap,
    the Mistral raw-file override, and the Phase 1a sources remains a follow-up
    (git/narrative is the main session's responsibility).
 
 ## Phase 1b — what remains
 
-- **Managed Agents deployment**: promote the collector/watch runners to the
-  always-on agent surface (design §5); wire the exceptions-queue → GitHub-issue
-  path end-to-end once repos exist.
-- **Verification pipeline**: the verifier identity that consumes the run
-  report's verdict DRAFTs and writes `verdicts/**` (collector emits drafts
-  only; dual-agent separation must be preserved).
+- **Managed Agents deployment**: promote the collector/watch/verifier runners
+  to the always-on agent surface (design §5); wire the exceptions-queue →
+  GitHub-issue path end-to-end once repos exist.
+- **Verification pipeline**: DONE 2026-07-08 — `tools/verifier/`
+  (`llmreport_verifier`), the verifier identity consuming run-report verdict
+  DRAFTs as hints and sweeping the store; writes ONLY `verdicts/**`
+  (dual-agent separation preserved). See "Phase 1b component status" above.
 - **Probe harness**: own-probe collectors (xAI availability probe, others) —
   **blocked on probe accounts / API credentials**; publishing xAI numbers stays
   BLOCKED until the manual API-terms review at signup (registry
